@@ -1,0 +1,137 @@
+{
+  "welcome": {
+    "title": "👋 Welcome to BIAgent — Business Intelligence Assistant",
+    "description": "I provide real-time business data from your CRM, ERP, and Inventory systems. Ask me anything in English or Hebrew.",
+    "prompt": "What would you like to know today?"
+  },
+
+  "error": {
+    "generic": "Sorry, something went wrong. Please try again in a moment.",
+    "no_data": "No data found for your request. Please check the query parameters and try again.",
+    "permission_denied": "Access denied. You do not have permission to view this data. Please contact your administrator to request the appropriate role.",
+    "timeout": "The request timed out. The data system may be under load. Please try again in 30 seconds.",
+    "system_unavailable": "The data system is temporarily unavailable. Please try again later or contact IT support."
+  },
+
+  "sales": {
+    "pipeline": {
+      "title": "📊 Sales Pipeline",
+      "total_value": "Total Pipeline Value",
+      "deals_closing": "Deals Closing This Month",
+      "win_rate": "Win Rate (90 days)",
+      "top_rep": "Top Sales Rep",
+      "at_risk": "Deals at Risk",
+      "weighted_forecast": "Weighted Forecast",
+      "no_deals": "No deals found for the selected period."
+    },
+    "performance": {
+      "title": "🏆 Sales Performance Leaderboard",
+      "rep": "Sales Rep",
+      "revenue": "Revenue",
+      "quota": "Quota",
+      "attainment": "Attainment",
+      "deals_won": "Deals Won",
+      "no_data": "No sales performance data available."
+    },
+    "deal": {
+      "title": "📋 Deal Details",
+      "status": "Status",
+      "account": "Account",
+      "value": "Deal Value",
+      "close_date": "Expected Close",
+      "owner": "Account Owner",
+      "stage": "Stage",
+      "last_activity": "Last Activity"
+    }
+  },
+
+  "inventory": {
+    "title": "🏭 Inventory Status",
+    "critical_alert": "⚠️ CRITICAL: Immediate action required",
+    "low_stock": "Stock levels below minimum threshold",
+    "on_hand": "Units On Hand",
+    "minimum_level": "Minimum Level",
+    "days_to_stockout": "Est. Days to Stockout",
+    "action_required": "Action Required",
+    "sku": "SKU Code",
+    "product": "Product Name",
+    "warehouse": "Warehouse",
+    "no_low_stock": "✅ All items are above minimum stock levels.",
+    "all_warehouses": "All Warehouses"
+  },
+
+  "procurement": {
+    "po_status": {
+      "title": "📦 Purchase Order Status",
+      "supplier": "Supplier",
+      "value": "Order Value",
+      "expected_date": "Expected Delivery",
+      "overdue_warning": "⚠️ This PO is overdue",
+      "line_items": "Line Items",
+      "contact": "Supplier Contact"
+    },
+    "approvals": {
+      "title": "✅ Pending Approvals",
+      "none_pending": "No purchase orders pending your approval.",
+      "approve_action": "Please contact your procurement manager to approve via the ERP system.",
+      "count": "approvals waiting"
+    },
+    "supplier": {
+      "title": "🏢 Supplier Information",
+      "category": "Category",
+      "contact": "Contact",
+      "email": "Email",
+      "phone": "Phone",
+      "no_suppliers": "No suppliers found for this category."
+    }
+  },
+
+  "help": {
+    "title": "🤖 BIAgent Help — Available Commands",
+    "commands": "Here is what I can help you with:",
+    "sales_commands": "Sales Intelligence",
+    "inventory_commands": "Inventory Management",
+    "procurement_commands": "Procurement Support",
+    "language_commands": "Language Settings",
+    "examples": "Example Queries"
+  },
+
+  "alerts": {
+    "low_stock": {
+      "title": "🟡 Low Stock Alert"
+    },
+    "critical_stock": {
+      "title": "🔴 Critical Stock Alert — Immediate Action Required"
+    },
+    "po_overdue": {
+      "title": "⚠️ Overdue Purchase Order Alert"
+    },
+    "po_pending": {
+      "title": "📋 Purchase Orders Awaiting Approval"
+    },
+    "generated_at": "Alert generated at",
+    "data_source": "Data Source"
+  },
+
+  "status": {
+    "approved": "✅ Approved",
+    "pending": "⏳ Pending",
+    "overdue": "🔴 Overdue",
+    "in_transit": "🚚 In Transit",
+    "delivered": "✅ Delivered",
+    "cancelled": "❌ Cancelled",
+    "open": "📂 Open",
+    "closed_won": "🏆 Closed Won",
+    "closed_lost": "❌ Closed Lost",
+    "negotiation": "🤝 Negotiation",
+    "proposal": "📄 Proposal Sent"
+  },
+
+  "common": {
+    "language_switched": "Language set to English.",
+    "footer_data_source": "Data from",
+    "footer_timestamp": "Retrieved at",
+    "loading": "Retrieving your data...",
+    "unknown_command": "I didn't understand that request. Type 'help' to see available commands."
+  }
+}
