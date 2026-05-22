@@ -1,0 +1,75 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.16",
+  "version": "1.0.0",
+  "id": "00000000-0000-0000-0000-000000000001",
+  "packageName": "com.yourcompany.teams-bi-agent",
+  "developer": {
+    "name": "Your Company Ltd.",
+    "websiteUrl": "https://your-company.example.com",
+    "privacyUrl": "https://your-company.example.com/privacy",
+    "termsOfUseUrl": "https://your-company.example.com/terms"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "BIAgent",
+    "full": "Teams Business Intelligence Agent | עוזר BI עסקי"
+  },
+  "description": {
+    "short": "Business Intelligence Assistant | עוזר BI עסקי",
+    "full": "BIAgent is an enterprise-grade conversational assistant embedded directly into Microsoft Teams. It serves as a single intelligent interface for querying live business data across Sales (CRM), Inventory, and Procurement (ERP) systems — without leaving the Teams environment.\n\nUsers interact with the bot in plain language, in either English or Hebrew, and receive structured, actionable data in under 30 seconds.\n\nCapabilities:\n• Sales Intelligence — Pipeline summary, deal status, rep performance, win rates\n• Inventory Management — Real-time stock levels, low-stock alerts, SKU lookup\n• Procurement Support — PO status, supplier information, pending approvals\n• Proactive Alerts — Automatic notifications when inventory or procurement thresholds are breached\n• Bilingual — Fully supports English and Hebrew (RTL)\n\n---\n\nBIAgent הוא עוזר שיחתי ברמה ארגונית המשובץ ישירות ב-Microsoft Teams. הוא משמש כממשק חכם יחיד לשאילתת נתוני עסקים חיים בין מערכות מכירות (CRM), מלאי ורכש (ERP).\n\nמשתמשים מתקשרים עם הבוט בשפה טבעית, באנגלית או בעברית, ומקבלים נתונים מובנים ואקציונבליים תוך 30 שניות."
+  },
+  "accentColor": "#0078D4",
+  "bots": [
+    {
+      "botId": "00000000-0000-0000-0000-000000000001",
+      "scopes": ["personal", "team", "groupchat"],
+      "supportsFiles": false,
+      "isNotificationOnly": false,
+      "commandLists": [
+        {
+          "scopes": ["personal", "team", "groupchat"],
+          "commands": [
+            {
+              "title": "Sales Pipeline",
+              "description": "Show the current sales pipeline summary"
+            },
+            {
+              "title": "Inventory Status",
+              "description": "Show current inventory levels and alerts"
+            },
+            {
+              "title": "PO Status",
+              "description": "Look up a purchase order status"
+            },
+            {
+              "title": "Help",
+              "description": "Show all available commands"
+            },
+            {
+              "title": "פייפליין מכירות",
+              "description": "הצג סיכום צינור מכירות נוכחי"
+            },
+            {
+              "title": "מצב מלאי",
+              "description": "הצג רמות מלאי נוכחיות והתראות"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": [
+    "*.botframework.com",
+    "token.botframework.com",
+    "smba.trafficmanager.net"
+  ],
+  "webApplicationInfo": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "resource": "api://botid-00000000-0000-0000-0000-000000000001"
+  }
+}
