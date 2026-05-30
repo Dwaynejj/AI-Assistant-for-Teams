@@ -26,5 +26,13 @@
     "no-eval": "error",
     "no-implied-eval": "error"
   },
+  "overrides": [
+    {
+      "files": ["tests/**/*.ts"],
+      "parserOptions": {
+        "project": "./tsconfig.test.json"
+      }
+    }
+  ],
   "ignorePatterns": ["dist/", "node_modules/", "jest.config.ts"]
 }

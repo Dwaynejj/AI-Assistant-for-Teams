@@ -43,6 +43,7 @@ function getClient(): appInsights.TelemetryClient | null {
 export function logQuery(event: AuditEvent, sessionId: string): void {
   const client = getClient();
   if (!client) {
+    // eslint-disable-next-line no-console
     console.warn('[Logger] AppInsights not initialised — skipping query log');
     return;
   }
@@ -97,6 +98,7 @@ export function logAlert(alertType: string, itemCount: number, sessionId: string
 export function logError(error: Error, context: Record<string, string>, sessionId: string): void {
   const client = getClient();
   if (!client) {
+    // eslint-disable-next-line no-console
     console.error('[Logger] Error (AppInsights not available):', error, context);
     return;
   }
@@ -156,6 +158,7 @@ export function logInfo(message: string, properties?: Record<string, string>): v
   if (client) {
     client.trackTrace({ message, properties });
   } else {
+    // eslint-disable-next-line no-console
     console.info(`[INFO] ${message}`, properties);
   }
 }

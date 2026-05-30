@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * @file index.ts
  * @description Express app entry point for the Teams BI Agent.
@@ -13,7 +14,7 @@
 
 import express, { Request, Response } from 'express';
 import { BotFrameworkAdapter } from 'botbuilder';
-import { initConfig, initAppInsights, getConfig } from './utils/config';
+import { initConfig, initAppInsights } from './utils/config';
 import { logInfo, logError } from './utils/logger';
 import { BIAgent } from './bot/biAgent';
 
@@ -46,7 +47,7 @@ async function main(): Promise<void> {
   });
 
   // On adapter error: log and send error activity
-  adapter.onTurnError = async (context, error) => {
+  adapter.onTurnError = async (context, error): Promise<void> => {
     console.error('[Adapter] Unhandled error:', error);
     logError(error, { context: 'BotFrameworkAdapter.onTurnError' }, 'adapter-error');
 
@@ -75,11 +76,13 @@ async function main(): Promise<void> {
    * NEVER bypass the adapter's token validation on this endpoint.
    */
   app.post('/api/messages', (req: Request, res: Response) => {
-    adapter.processActivity(req, res, async (context) => {
-      await bot.run(context);
-    }).catch((err) => {
-      console.error('[Route /api/messages] Unhandled error:', err);
-    });
+    adapter
+      .processActivity(req, res, async (context) => {
+        await bot.run(context);
+      })
+      .catch((err) => {
+        console.error('[Route /api/messages] Unhandled error:', err);
+      });
   });
 
   /**

@@ -3,8 +3,6 @@
  * @description Global Jest test setup — configures environment variables and mocks.
  */
 
-import dotenv from 'dotenv';
-
 // Load test environment variables
 process.env['NODE_ENV'] = 'test';
 process.env['MICROSOFT_APP_ID'] = 'test-app-id';
@@ -19,7 +17,7 @@ process.env['CRITICAL_STOCK_THRESHOLD'] = '10';
 process.env['PO_OVERDUE_DAYS'] = '3';
 process.env['ALERT_TEAMS_CHANNEL_ID'] = 'test-channel-id';
 process.env['ALERT_TEAMS_TEAM_ID'] = 'test-team-id';
-process.env['APPINSIGHTS_INSTRUMENTATIONKEY'] = 'test-insights-key';
+process.env['APPLICATIONINSIGHTS_CONNECTION_STRING'] = 'InstrumentationKey=test-insights-key';
 process.env['AAD_TENANT_ID'] = 'test-tenant-id';
 process.env['AAD_ROLE_GROUP_SALES'] = 'test-sales-group';
 process.env['AAD_ROLE_GROUP_INVENTORY'] = 'test-inventory-group';

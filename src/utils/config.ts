@@ -46,6 +46,7 @@ export interface Config {
 
   // Azure Application Insights
   appInsightsInstrumentationKey: string;
+  appInsightsConnectionString?: string;
 
   // Azure AD / RBAC
   aadTenantId: string;
@@ -89,7 +90,6 @@ const REQUIRED_KEYS: ReadonlyArray<string> = [
   'PO_OVERDUE_DAYS',
   'ALERT_TEAMS_CHANNEL_ID',
   'ALERT_TEAMS_TEAM_ID',
-  'APPINSIGHTS_INSTRUMENTATIONKEY',
   'AAD_TENANT_ID',
   'AAD_ROLE_GROUP_SALES',
   'AAD_ROLE_GROUP_INVENTORY',
@@ -125,6 +125,7 @@ async function loadFromKeyVault(keyVaultUrl: string): Promise<Record<string, str
       'Inventory-Db-Connection-String': 'INVENTORY_DB_CONNECTION_STRING',
       'Azure-Language-Key': 'AZURE_LANGUAGE_KEY',
       'Appinsights-Instrumentationkey': 'APPINSIGHTS_INSTRUMENTATIONKEY',
+      'Applicationinsights-Connection-String': 'APPLICATIONINSIGHTS_CONNECTION_STRING',
     };
 
     for (const [kvName, envName] of Object.entries(secretMappings)) {
@@ -141,6 +142,7 @@ async function loadFromKeyVault(keyVaultUrl: string): Promise<Record<string, str
     return secrets;
   } catch (err) {
     // Key Vault not available — proceed with env vars
+    // eslint-disable-next-line no-console
     console.warn('[Config] Key Vault not available, using environment variables only:', err);
     return {};
   }
@@ -154,6 +156,9 @@ async function loadFromKeyVault(keyVaultUrl: string): Promise<Record<string, str
  */
 function validateConfig(env: Record<string, string | undefined>): void {
   const missing = REQUIRED_KEYS.filter((key) => !env[key]);
+  if (!env['APPINSIGHTS_INSTRUMENTATIONKEY'] && !env['APPLICATIONINSIGHTS_CONNECTION_STRING']) {
+    missing.push('APPINSIGHTS_INSTRUMENTATIONKEY or APPLICATIONINSIGHTS_CONNECTION_STRING');
+  }
   if (missing.length > 0) {
     throw new Error(
       `[Config] Missing required environment variables:\n  ${missing.join('\n  ')}\n` +
@@ -204,7 +209,8 @@ export async function loadConfig(): Promise<Config> {
     alertTeamsChannelId: env['ALERT_TEAMS_CHANNEL_ID']!,
     alertTeamsTeamId: env['ALERT_TEAMS_TEAM_ID']!,
 
-    appInsightsInstrumentationKey: env['APPINSIGHTS_INSTRUMENTATIONKEY']!,
+    appInsightsInstrumentationKey: env['APPINSIGHTS_INSTRUMENTATIONKEY'] ?? '',
+    appInsightsConnectionString: env['APPLICATIONINSIGHTS_CONNECTION_STRING'],
 
     aadTenantId: env['AAD_TENANT_ID']!,
     aadRoleGroupSales: env['AAD_ROLE_GROUP_SALES']!,
@@ -262,8 +268,9 @@ export async function initConfig(): Promise<Config> {
  * @param config - The loaded application config
  */
 export function initAppInsights(config: Config): void {
+  const setupKey = config.appInsightsConnectionString || config.appInsightsInstrumentationKey;
   appInsights
-    .setup(config.appInsightsInstrumentationKey)
+    .setup(setupKey)
     .setAutoDependencyCorrelation(true)
     .setAutoCollectRequests(true)
     .setAutoCollectPerformance(true)
