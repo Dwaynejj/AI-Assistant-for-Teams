@@ -8,7 +8,7 @@
 import { InventoryConnector } from '../connectors/inventoryConnector';
 import { ERPConnector } from '../connectors/erpConnector';
 import { getConfig } from '../utils/config';
-import { logAlert } from '../utils/logger';
+import { logAlert, logError } from '../utils/logger';
 
 /** Alert type identifiers */
 export type AlertType = 'LOW_STOCK' | 'CRITICAL_STOCK' | 'PO_OVERDUE' | 'PO_PENDING_APPROVAL';
@@ -126,7 +126,10 @@ export async function checkAlerts(
       sessionId,
     );
 
-    if (criticalItems.length > 0 && !isDuplicate('CRITICAL_STOCK', criticalItems, alertConfig.checkIntervalMinutes)) {
+    if (
+      criticalItems.length > 0 &&
+      !isDuplicate('CRITICAL_STOCK', criticalItems, alertConfig.checkIntervalMinutes)
+    ) {
       alerts.push({
         type: 'CRITICAL_STOCK',
         severity: 'critical',
@@ -138,7 +141,8 @@ export async function checkAlerts(
       logAlert('CRITICAL_STOCK', criticalItems.length, sessionId);
     }
   } catch (err) {
-    console.error('[AlertEngine] Error checking critical stock:', err);
+    const error = err instanceof Error ? err : new Error(String(err));
+    logError(error, { component: 'AlertEngine', action: 'checkCriticalStock' }, sessionId);
   }
 
   // ── Check 2: Low stock (above critical, below low threshold) ─────────────
@@ -150,7 +154,10 @@ export async function checkAlerts(
       (item) => item.onHand > alertConfig.criticalStockThreshold,
     );
 
-    if (lowOnlyItems.length > 0 && !isDuplicate('LOW_STOCK', lowOnlyItems, alertConfig.checkIntervalMinutes)) {
+    if (
+      lowOnlyItems.length > 0 &&
+      !isDuplicate('LOW_STOCK', lowOnlyItems, alertConfig.checkIntervalMinutes)
+    ) {
       alerts.push({
         type: 'LOW_STOCK',
         severity: 'warning',
@@ -162,14 +169,18 @@ export async function checkAlerts(
       logAlert('LOW_STOCK', lowOnlyItems.length, sessionId);
     }
   } catch (err) {
-    console.error('[AlertEngine] Error checking low stock:', err);
+    const error = err instanceof Error ? err : new Error(String(err));
+    logError(error, { component: 'AlertEngine', action: 'checkLowStock' }, sessionId);
   }
 
   // ── Check 3: Overdue purchase orders ─────────────────────────────────────
   try {
     const overduePOs = await erp.getOverduePOs(sessionId);
 
-    if (overduePOs.length > 0 && !isDuplicate('PO_OVERDUE', overduePOs, alertConfig.checkIntervalMinutes)) {
+    if (
+      overduePOs.length > 0 &&
+      !isDuplicate('PO_OVERDUE', overduePOs, alertConfig.checkIntervalMinutes)
+    ) {
       alerts.push({
         type: 'PO_OVERDUE',
         severity: 'warning',
@@ -181,7 +192,8 @@ export async function checkAlerts(
       logAlert('PO_OVERDUE', overduePOs.length, sessionId);
     }
   } catch (err) {
-    console.error('[AlertEngine] Error checking overdue POs:', err);
+    const error = err instanceof Error ? err : new Error(String(err));
+    logError(error, { component: 'AlertEngine', action: 'checkOverduePOs' }, sessionId);
   }
 
   return alerts;

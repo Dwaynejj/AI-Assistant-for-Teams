@@ -10,11 +10,11 @@
  */
 
 import axios from 'axios';
-import { CardFactory, MessageFactory } from 'botbuilder';
+import { CardFactory } from 'botbuilder';
 import { Alert } from './alertEngine';
 import { formatAlert } from './alertFormatter';
 import { getConfig } from '../utils/config';
-import { logAlert, logError } from '../utils/logger';
+import { logAlert, logError, logInfo } from '../utils/logger';
 
 /** Cache for the Bot Framework access token */
 let cachedToken: { token: string; expiresAt: number } | null = null;
@@ -58,7 +58,10 @@ async function getBotToken(): Promise<string> {
  * @param alerts - Array of Alert objects to send
  * @param sessionId - Correlation ID for logging
  */
-export async function sendAlertsToTeams(alerts: Alert[], sessionId: string = 'notifier'): Promise<void> {
+export async function sendAlertsToTeams(
+  alerts: Alert[],
+  sessionId: string = 'notifier',
+): Promise<void> {
   if (alerts.length === 0) return;
 
   const config = getConfig();
@@ -69,7 +72,6 @@ export async function sendAlertsToTeams(alerts: Alert[], sessionId: string = 'no
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
     logError(error, { context: 'teamsNotifier.getBotToken' }, sessionId);
-    console.error('[TeamsNotifier] Failed to obtain Bot Framework token:', err);
     return;
   }
 
@@ -80,9 +82,7 @@ export async function sendAlertsToTeams(alerts: Alert[], sessionId: string = 'no
       // Build the Bot Framework activity payload
       const activity = {
         type: 'message',
-        attachments: [
-          CardFactory.adaptiveCard(formatted.adaptiveCard),
-        ],
+        attachments: [CardFactory.adaptiveCard(formatted.adaptiveCard)],
         channelData: {
           channel: { id: config.alertTeamsChannelId },
           team: { id: config.alertTeamsTeamId },
@@ -105,11 +105,10 @@ export async function sendAlertsToTeams(alerts: Alert[], sessionId: string = 'no
       });
 
       logAlert(alert.type, alert.items.length, sessionId);
-      console.info(`[TeamsNotifier] Sent ${alert.type} alert (${alert.items.length} items)`);
+      logInfo(`[TeamsNotifier] Sent ${alert.type} alert (${alert.items.length} items)`);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       logError(error, { alertType: alert.type, context: 'teamsNotifier.send' }, sessionId);
-      console.error(`[TeamsNotifier] Failed to send alert ${alert.type}:`, err);
       // Continue to next alert — partial delivery is better than no delivery
     }
   }
