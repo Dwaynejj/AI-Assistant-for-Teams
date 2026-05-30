@@ -36,7 +36,7 @@ type DateResolver = () => DateRange;
 const DATE_EXPRESSIONS: Array<{ patterns: RegExp[]; resolver: DateResolver }> = [
   {
     patterns: [/\bthis month\b/i, /\bהחודש\b/],
-    resolver: () => {
+    resolver: (): DateRange => {
       const now = new Date();
       return {
         from: new Date(now.getFullYear(), now.getMonth(), 1),
@@ -47,7 +47,7 @@ const DATE_EXPRESSIONS: Array<{ patterns: RegExp[]; resolver: DateResolver }> = 
   },
   {
     patterns: [/\blast month\b/i, /\bחודש שעבר\b/],
-    resolver: () => {
+    resolver: (): DateRange => {
       const now = new Date();
       return {
         from: new Date(now.getFullYear(), now.getMonth() - 1, 1),
@@ -58,7 +58,7 @@ const DATE_EXPRESSIONS: Array<{ patterns: RegExp[]; resolver: DateResolver }> = 
   },
   {
     patterns: [/\bthis year\b/i, /\bהשנה\b/],
-    resolver: () => {
+    resolver: (): DateRange => {
       const now = new Date();
       return {
         from: new Date(now.getFullYear(), 0, 1),
@@ -69,7 +69,7 @@ const DATE_EXPRESSIONS: Array<{ patterns: RegExp[]; resolver: DateResolver }> = 
   },
   {
     patterns: [/\blast 90 days?\b/i, /\b90 ימים\b/],
-    resolver: () => {
+    resolver: (): DateRange => {
       const to = new Date();
       const from = new Date();
       from.setDate(from.getDate() - 90);
@@ -78,7 +78,7 @@ const DATE_EXPRESSIONS: Array<{ patterns: RegExp[]; resolver: DateResolver }> = 
   },
   {
     patterns: [/\blast 30 days?\b/i, /\b30 ימים\b/],
-    resolver: () => {
+    resolver: (): DateRange => {
       const to = new Date();
       const from = new Date();
       from.setDate(from.getDate() - 30);
@@ -87,35 +87,35 @@ const DATE_EXPRESSIONS: Array<{ patterns: RegExp[]; resolver: DateResolver }> = 
   },
   {
     patterns: [/\bQ1\b/i, /\bרבעון 1\b/, /\bרבעון ראשון\b/],
-    resolver: () => {
+    resolver: (): DateRange => {
       const year = new Date().getFullYear();
       return { from: new Date(year, 0, 1), to: new Date(year, 2, 31), label: 'Q1' };
     },
   },
   {
     patterns: [/\bQ2\b/i, /\bרבעון 2\b/, /\bרבעון שני\b/],
-    resolver: () => {
+    resolver: (): DateRange => {
       const year = new Date().getFullYear();
       return { from: new Date(year, 3, 1), to: new Date(year, 5, 30), label: 'Q2' };
     },
   },
   {
     patterns: [/\bQ3\b/i, /\bרבעון 3\b/, /\bרבעון שלישי\b/],
-    resolver: () => {
+    resolver: (): DateRange => {
       const year = new Date().getFullYear();
       return { from: new Date(year, 6, 1), to: new Date(year, 8, 30), label: 'Q3' };
     },
   },
   {
     patterns: [/\bQ4\b/i, /\bרבעון 4\b/, /\bרבעון רביעי\b/],
-    resolver: () => {
+    resolver: (): DateRange => {
       const year = new Date().getFullYear();
       return { from: new Date(year, 9, 1), to: new Date(year, 11, 31), label: 'Q4' };
     },
   },
   {
     patterns: [/\btoday\b/i, /\bהיום\b/],
-    resolver: () => {
+    resolver: (): DateRange => {
       const now = new Date();
       const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);

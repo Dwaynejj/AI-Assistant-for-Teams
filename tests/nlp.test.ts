@@ -18,13 +18,15 @@ import { initConfig } from '../src/utils/config';
 // Mock the Azure AI Language client to prevent real API calls
 jest.mock('@azure/ai-language-text', () => ({
   TextAnalysisClient: jest.fn().mockImplementation(() => ({
-    analyze: jest.fn().mockResolvedValue([
-      { primaryLanguage: { iso6391Name: 'en', confidenceScore: 0.99 } },
-    ]),
+    analyze: jest
+      .fn()
+      .mockResolvedValue([{ primaryLanguage: { iso6391Name: 'en', confidenceScore: 0.99 } }]),
   })),
   ConversationAnalysisClient: jest.fn().mockImplementation(() => ({
     analyzeConversation: jest.fn().mockResolvedValue({
-      result: { prediction: { topIntent: 'Help', intents: [{ category: 'Help', confidenceScore: 0.95 }] } },
+      result: {
+        prediction: { topIntent: 'Help', intents: [{ category: 'Help', confidenceScore: 0.95 }] },
+      },
     }),
   })),
   AzureKeyCredential: jest.fn(),
@@ -203,10 +205,10 @@ describe('Entity Extraction', () => {
   });
 
   it('should extract rep name from known list', () => {
-    const entities = extractEntities(
-      'Show me deals for Sarah Cohen',
-      ['Sarah Cohen', 'David Levy'],
-    );
+    const entities = extractEntities('Show me deals for Sarah Cohen', [
+      'Sarah Cohen',
+      'David Levy',
+    ]);
     expect(entities.repName).toBe('Sarah Cohen');
   });
 

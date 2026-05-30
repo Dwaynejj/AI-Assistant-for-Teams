@@ -27,6 +27,7 @@
   "author": "Teams BI Agent Team",
   "license": "MIT",
   "dependencies": {
+    "@azure/ai-language-conversations": "^1.0.0-beta.1",
     "@azure/ai-language-text": "^1.1.0",
     "@azure/functions": "^3.5.1",
     "@azure/identity": "^4.4.1",

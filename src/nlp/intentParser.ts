@@ -45,7 +45,16 @@ const INTENT_KEYWORDS: Record<IntentKey, { en: string[]; he: string[] }> = {
     he: ['פייפליין', 'תחזית', 'הזדמנויות', 'עסקאות נסגרות'],
   },
   SALES_PERFORMANCE: {
-    en: ['performance', 'quota', 'revenue', 'rep', 'win rate', 'attainment', 'leaderboard', 'top rep'],
+    en: [
+      'performance',
+      'quota',
+      'revenue',
+      'rep',
+      'win rate',
+      'attainment',
+      'leaderboard',
+      'top rep',
+    ],
     he: ['ביצועים', 'מכסה', 'הכנסות', 'נציג', 'שיעור ניצחון', 'דירוג'],
   },
   SALES_DEAL_DETAIL: {
@@ -164,11 +173,12 @@ async function cluClassify(
     return undefined;
   }
 
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
   try {
     // Dynamic import: @azure/ai-language-conversations contains ConversationAnalysisClient
     // This package ships with newer versions of the Azure AI SDK
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { ConversationAnalysisClient, AzureKeyCredential } = await import('@azure/ai-language-text' as string) as any;
+    const { ConversationAnalysisClient, AzureKeyCredential } =
+      await import('@azure/ai-language-conversations');
 
     const client = new ConversationAnalysisClient(
       config.azureLanguageEndpoint,
@@ -209,6 +219,7 @@ async function cluClassify(
     // CLU unavailable — caller will fall back to keyword matching
     return undefined;
   }
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion */
 }
 
 /**
@@ -219,7 +230,10 @@ async function cluClassify(
  * @param knownRepNames - Optional list of known rep names for entity extraction
  * @returns A fully-populated ParsedIntent object
  */
-export async function parseIntent(rawText: string, knownRepNames: string[] = []): Promise<ParsedIntent> {
+export async function parseIntent(
+  rawText: string,
+  knownRepNames: string[] = [],
+): Promise<ParsedIntent> {
   const langResult = await detectLanguage(rawText);
   const language = langResult.language;
   const entities = extractEntities(rawText, knownRepNames);
