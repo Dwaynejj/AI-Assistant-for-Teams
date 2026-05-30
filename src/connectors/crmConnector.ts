@@ -127,11 +127,51 @@ function getMockPipeline(): PipelineSummary {
 
 function getMockPerformance(): SalesPerformance[] {
   return [
-    { repName: 'Sarah Cohen', repId: 'R-01', revenue: 620000, quota: 700000, attainment: 0.886, dealsWon: 8, rank: 1 },
-    { repName: 'David Levy', repId: 'R-02', revenue: 540000, quota: 600000, attainment: 0.9, dealsWon: 6, rank: 2 },
-    { repName: 'Maya Shapiro', repId: 'R-03', revenue: 480000, quota: 600000, attainment: 0.8, dealsWon: 5, rank: 3 },
-    { repName: 'Yoav Ben-David', repId: 'R-04', revenue: 390000, quota: 500000, attainment: 0.78, dealsWon: 4, rank: 4 },
-    { repName: 'Tali Mizrahi', repId: 'R-05', revenue: 310000, quota: 400000, attainment: 0.775, dealsWon: 3, rank: 5 },
+    {
+      repName: 'Sarah Cohen',
+      repId: 'R-01',
+      revenue: 620000,
+      quota: 700000,
+      attainment: 0.886,
+      dealsWon: 8,
+      rank: 1,
+    },
+    {
+      repName: 'David Levy',
+      repId: 'R-02',
+      revenue: 540000,
+      quota: 600000,
+      attainment: 0.9,
+      dealsWon: 6,
+      rank: 2,
+    },
+    {
+      repName: 'Maya Shapiro',
+      repId: 'R-03',
+      revenue: 480000,
+      quota: 600000,
+      attainment: 0.8,
+      dealsWon: 5,
+      rank: 3,
+    },
+    {
+      repName: 'Yoav Ben-David',
+      repId: 'R-04',
+      revenue: 390000,
+      quota: 500000,
+      attainment: 0.78,
+      dealsWon: 4,
+      rank: 4,
+    },
+    {
+      repName: 'Tali Mizrahi',
+      repId: 'R-05',
+      revenue: 310000,
+      quota: 400000,
+      attainment: 0.775,
+      dealsWon: 3,
+      rank: 5,
+    },
   ];
 }
 
@@ -146,7 +186,11 @@ export class CRMConnector {
 
   constructor() {
     const config = getConfig();
-    this.useMock = config.crmApiUrl.includes('mock') || config.crmApiUrl === 'https://your-crm.example.com/api';
+    this.useMock =
+      config.useMockData !== undefined
+        ? config.useMockData
+        : config.crmApiUrl.includes('mock') ||
+          config.crmApiUrl === 'https://your-crm.example.com/api';
     this.client = createHttpClient({
       baseUrl: config.crmApiUrl,
       apiKey: config.crmApiKey,
@@ -186,9 +230,15 @@ export class CRMConnector {
    * @param sessionId - Correlation ID
    * @returns Array of matching deals
    */
-  async getDealsByRep(repName: string, dateRange: DateRange, sessionId: string = 'default'): Promise<Deal[]> {
+  async getDealsByRep(
+    repName: string,
+    dateRange: DateRange,
+    sessionId: string = 'default',
+  ): Promise<Deal[]> {
     if (this.useMock) {
-      return getMockDeals().filter((d) => d.ownerName.toLowerCase().includes(repName.toLowerCase()));
+      return getMockDeals().filter((d) =>
+        d.ownerName.toLowerCase().includes(repName.toLowerCase()),
+      );
     }
 
     return executeWithRetry<Deal[]>(
@@ -196,7 +246,11 @@ export class CRMConnector {
       {
         method: 'GET',
         url: '/deals',
-        params: { rep: repName, from: dateRange.from.toISOString(), to: dateRange.to.toISOString() },
+        params: {
+          rep: repName,
+          from: dateRange.from.toISOString(),
+          to: dateRange.to.toISOString(),
+        },
       },
       this.systemName,
       'getDealsByRep',
@@ -214,9 +268,30 @@ export class CRMConnector {
   async getTopAccounts(limit: number = 5, sessionId: string = 'default'): Promise<Account[]> {
     if (this.useMock) {
       return [
-        { id: 'A-01', name: 'Acme Corp', totalDealValue: 1200000, industry: 'Technology', region: 'North', primaryRep: 'Sarah Cohen' },
-        { id: 'A-02', name: 'GlobalTech', totalDealValue: 980000, industry: 'Manufacturing', region: 'South', primaryRep: 'David Levy' },
-        { id: 'A-03', name: 'TechStart Ltd', totalDealValue: 650000, industry: 'SaaS', region: 'Central', primaryRep: 'Maya Shapiro' },
+        {
+          id: 'A-01',
+          name: 'Acme Corp',
+          totalDealValue: 1200000,
+          industry: 'Technology',
+          region: 'North',
+          primaryRep: 'Sarah Cohen',
+        },
+        {
+          id: 'A-02',
+          name: 'GlobalTech',
+          totalDealValue: 980000,
+          industry: 'Manufacturing',
+          region: 'South',
+          primaryRep: 'David Levy',
+        },
+        {
+          id: 'A-03',
+          name: 'TechStart Ltd',
+          totalDealValue: 650000,
+          industry: 'SaaS',
+          region: 'Central',
+          primaryRep: 'Maya Shapiro',
+        },
       ].slice(0, limit);
     }
 
@@ -239,7 +314,13 @@ export class CRMConnector {
   async getDealDetail(dealId: string, sessionId: string = 'default'): Promise<DealDetail> {
     if (this.useMock) {
       const base = getMockDeals().find((d) => d.id === dealId) ?? getMockDeals()[0];
-      return { ...base!, description: 'Enterprise-wide platform rollout across 500 seats.', lineItems: 14, probability: 0.72, nextStep: 'Legal review' };
+      return {
+        ...base,
+        description: 'Enterprise-wide platform rollout across 500 seats.',
+        lineItems: 14,
+        probability: 0.72,
+        nextStep: 'Legal review',
+      };
     }
 
     return executeWithRetry<DealDetail>(
@@ -265,7 +346,11 @@ export class CRMConnector {
 
     return executeWithRetry<WinRateResult>(
       this.client,
-      { method: 'GET', url: '/deals/winrate', params: { from: dateRange.from.toISOString(), to: dateRange.to.toISOString() } },
+      {
+        method: 'GET',
+        url: '/deals/winrate',
+        params: { from: dateRange.from.toISOString(), to: dateRange.to.toISOString() },
+      },
       this.systemName,
       'getWinRate',
       sessionId,
@@ -297,12 +382,19 @@ export class CRMConnector {
    * @param sessionId - Correlation ID
    * @returns Array of performance records, one per rep
    */
-  async getSalesPerformance(dateRange: DateRange, sessionId: string = 'default'): Promise<SalesPerformance[]> {
+  async getSalesPerformance(
+    dateRange: DateRange,
+    sessionId: string = 'default',
+  ): Promise<SalesPerformance[]> {
     if (this.useMock) return getMockPerformance();
 
     return executeWithRetry<SalesPerformance[]>(
       this.client,
-      { method: 'GET', url: '/performance', params: { from: dateRange.from.toISOString(), to: dateRange.to.toISOString() } },
+      {
+        method: 'GET',
+        url: '/performance',
+        params: { from: dateRange.from.toISOString(), to: dateRange.to.toISOString() },
+      },
       this.systemName,
       'getSalesPerformance',
       sessionId,
@@ -310,7 +402,15 @@ export class CRMConnector {
   }
 
   /** Return realistic mock data for unit testing */
-  static getMockData(): { pipeline: PipelineSummary; deals: Deal[]; performance: SalesPerformance[] } {
-    return { pipeline: getMockPipeline(), deals: getMockDeals(), performance: getMockPerformance() };
+  static getMockData(): {
+    pipeline: PipelineSummary;
+    deals: Deal[];
+    performance: SalesPerformance[];
+  } {
+    return {
+      pipeline: getMockPipeline(),
+      deals: getMockDeals(),
+      performance: getMockPerformance(),
+    };
   }
 }

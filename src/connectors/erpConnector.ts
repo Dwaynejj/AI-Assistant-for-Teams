@@ -187,7 +187,10 @@ export class ERPConnector {
   constructor() {
     const config = getConfig();
     this.useMock =
-      config.erpApiUrl.includes('mock') || config.erpApiUrl === 'https://your-erp.example.com/api';
+      config.useMockData !== undefined
+        ? config.useMockData
+        : config.erpApiUrl.includes('mock') ||
+          config.erpApiUrl === 'https://your-erp.example.com/api';
     this.client = createHttpClient({
       baseUrl: config.erpApiUrl,
       apiKey: config.erpApiKey,
@@ -204,9 +207,7 @@ export class ERPConnector {
    */
   async getPOStatus(poNumber: string, sessionId: string = 'default'): Promise<PurchaseOrder> {
     if (this.useMock) {
-      const po = getMockPOs().find(
-        (p) => p.poNumber.toLowerCase() === poNumber.toLowerCase(),
-      );
+      const po = getMockPOs().find((p) => p.poNumber.toLowerCase() === poNumber.toLowerCase());
       if (!po) throw new Error(`Purchase order ${poNumber} not found`);
       return po;
     }
@@ -227,7 +228,10 @@ export class ERPConnector {
    * @param sessionId - Correlation ID for logging
    * @returns Array of matching purchase orders
    */
-  async getOpenPOs(filters: POFilter = {}, sessionId: string = 'default'): Promise<PurchaseOrder[]> {
+  async getOpenPOs(
+    filters: POFilter = {},
+    sessionId: string = 'default',
+  ): Promise<PurchaseOrder[]> {
     if (this.useMock) {
       return getMockPOs().filter((po) => {
         if (po.status === 'CANCELLED' || po.status === 'DELIVERED') return false;
@@ -254,7 +258,10 @@ export class ERPConnector {
    * @param sessionId - Correlation ID for logging
    * @returns Array of POs awaiting this user's approval
    */
-  async getPendingApprovals(userId: string, sessionId: string = 'default'): Promise<PurchaseOrder[]> {
+  async getPendingApprovals(
+    userId: string,
+    sessionId: string = 'default',
+  ): Promise<PurchaseOrder[]> {
     if (this.useMock) {
       return getMockPOs().filter((po) => po.status === 'PENDING_APPROVAL');
     }
@@ -298,10 +305,13 @@ export class ERPConnector {
    * @param sessionId - Correlation ID for logging
    * @returns Array of matching suppliers
    */
-  async getSuppliersByCategory(category: string, sessionId: string = 'default'): Promise<Supplier[]> {
+  async getSuppliersByCategory(
+    category: string,
+    sessionId: string = 'default',
+  ): Promise<Supplier[]> {
     if (this.useMock) {
-      return getMockSuppliers().filter(
-        (s) => s.category.toLowerCase().includes(category.toLowerCase()),
+      return getMockSuppliers().filter((s) =>
+        s.category.toLowerCase().includes(category.toLowerCase()),
       );
     }
 

@@ -125,8 +125,10 @@ export class InventoryConnector {
   constructor() {
     const config = getConfig();
     this.useMock =
-      config.inventoryDbConnectionString.includes('mock') ||
-      config.inventoryDbConnectionString.includes('example');
+      config.useMockData !== undefined
+        ? config.useMockData
+        : config.inventoryDbConnectionString.includes('mock') ||
+          config.inventoryDbConnectionString.includes('example');
     this.criticalThreshold = config.criticalStockThreshold;
     this.lowThreshold = config.lowStockThreshold;
 
@@ -213,7 +215,7 @@ export class InventoryConnector {
       const low = items.filter(
         (i) => i.onHand > this.criticalThreshold && i.onHand < this.lowThreshold,
       ).length;
-      const totalValue = items.reduce((sum, i) => sum + (i.onHand * (i.unitCost ?? 0)), 0);
+      const totalValue = items.reduce((sum, i) => sum + i.onHand * (i.unitCost ?? 0), 0);
 
       return {
         warehouseId: warehouseId ?? 'ALL',
@@ -244,13 +246,14 @@ export class InventoryConnector {
    * @param sessionId - Correlation ID for logging
    * @returns Array of slow-moving stock items
    */
-  async getSlowMovingItems(daysThreshold: number, sessionId: string = 'default'): Promise<StockItem[]> {
+  async getSlowMovingItems(
+    daysThreshold: number,
+    sessionId: string = 'default',
+  ): Promise<StockItem[]> {
     if (this.useMock) {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - daysThreshold);
-      return getMockStockItems().filter(
-        (i) => i.lastMovementDate && i.lastMovementDate < cutoff,
-      );
+      return getMockStockItems().filter((i) => i.lastMovementDate && i.lastMovementDate < cutoff);
     }
 
     return executeWithRetry<StockItem[]>(
@@ -276,7 +279,9 @@ export class InventoryConnector {
     if (this.useMock) {
       let items = getMockStockItems();
       if (filters.category) {
-        items = items.filter((i) => i.category?.toLowerCase().includes(filters.category!.toLowerCase()));
+        items = items.filter((i) =>
+          i.category?.toLowerCase().includes(filters.category!.toLowerCase()),
+        );
       }
       if (filters.warehouseId) {
         items = items.filter((i) => i.warehouseId === filters.warehouseId);

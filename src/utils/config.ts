@@ -71,6 +71,7 @@ export interface Config {
   appVersion: string;
   defaultLanguage: 'en' | 'he';
   botServiceUrl: string;
+  useMockData?: boolean;
 }
 
 /**
@@ -189,6 +190,8 @@ export async function loadConfig(): Promise<Config> {
   validateConfig(env);
 
   const defaultLang = (env['DEFAULT_LANGUAGE'] ?? 'en') as 'en' | 'he';
+  const useMockData =
+    env['USE_MOCK_DATA'] !== undefined ? env['USE_MOCK_DATA'] === 'true' : undefined;
 
   return {
     microsoftAppId: env['MICROSOFT_APP_ID']!,
@@ -231,6 +234,7 @@ export async function loadConfig(): Promise<Config> {
     appVersion: env['APP_VERSION'] ?? '1.0.0',
     defaultLanguage: defaultLang,
     botServiceUrl: env['BOT_SERVICE_URL'] ?? 'https://smba.trafficmanager.net/teams/',
+    useMockData,
   };
 }
 

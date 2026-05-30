@@ -4,7 +4,6 @@
  * Tests use mock data and do not make real HTTP calls.
  */
 
-import axios from 'axios';
 import { initConfig } from '../src/utils/config';
 import { CRMConnector } from '../src/connectors/crmConnector';
 import { InventoryConnector } from '../src/connectors/inventoryConnector';
@@ -107,7 +106,11 @@ describe('CRM Connector', () => {
   });
 
   it('should filter deals by rep name', async () => {
-    const deals = await crm.getDealsByRep('Sarah Cohen', { from: new Date(2025, 0, 1), to: new Date(2025, 11, 31) }, 'test');
+    const deals = await crm.getDealsByRep(
+      'Sarah Cohen',
+      { from: new Date(2025, 0, 1), to: new Date(2025, 11, 31) },
+      'test',
+    );
     expect(deals.every((d) => d.ownerName.includes('Sarah Cohen'))).toBe(true);
   });
 
@@ -237,5 +240,47 @@ describe('ConnectorError', () => {
     expect(err.statusCode).toBe(404);
     expect(err.message).toBe('Not found');
     expect(err.name).toBe('ConnectorError');
+  });
+});
+
+describe('Mock Switching Override via config', () => {
+  let originalEnv: string | undefined;
+
+  beforeAll(() => {
+    originalEnv = process.env['USE_MOCK_DATA'];
+  });
+
+  afterAll(() => {
+    if (originalEnv === undefined) {
+      delete process.env['USE_MOCK_DATA'];
+    } else {
+      process.env['USE_MOCK_DATA'] = originalEnv;
+    }
+  });
+
+  it('should explicitly use mock data when USE_MOCK_DATA is true', async () => {
+    process.env['USE_MOCK_DATA'] = 'true';
+    await initConfig();
+
+    const crm = new CRMConnector();
+    const erp = new ERPConnector();
+    const inv = new InventoryConnector();
+
+    expect((crm as unknown as { useMock: boolean }).useMock).toBe(true);
+    expect((erp as unknown as { useMock: boolean }).useMock).toBe(true);
+    expect((inv as unknown as { useMock: boolean }).useMock).toBe(true);
+  });
+
+  it('should explicitly disable mock data when USE_MOCK_DATA is false', async () => {
+    process.env['USE_MOCK_DATA'] = 'false';
+    await initConfig();
+
+    const crm = new CRMConnector();
+    const erp = new ERPConnector();
+    const inv = new InventoryConnector();
+
+    expect((crm as unknown as { useMock: boolean }).useMock).toBe(false);
+    expect((erp as unknown as { useMock: boolean }).useMock).toBe(false);
+    expect((inv as unknown as { useMock: boolean }).useMock).toBe(false);
   });
 });
