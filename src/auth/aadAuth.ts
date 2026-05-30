@@ -34,8 +34,10 @@ export function extractUserIdentity(context: TurnContext): UserIdentity {
     };
   };
 
-  const fromAccount = (activity.from as unknown) as Record<string, unknown> & { aadObjectId?: string };
-  const objectId = (fromAccount.aadObjectId as string | undefined) ?? activity.from.id ?? 'unknown';
+  const fromAccount = activity.from as unknown as Record<string, unknown> & {
+    aadObjectId?: string;
+  };
+  const objectId = fromAccount.aadObjectId ?? activity.from.id ?? 'unknown';
 
   // The user's email/UPN is available in from.name in some configurations,
   // or via the Graph API using the objectId. Here we extract what's available.

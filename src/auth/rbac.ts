@@ -34,9 +34,30 @@ const RBAC_POLICY: RBACPolicy = {
   PROCUREMENT_PO_STATUS: [UserRole.PROCUREMENT_USER, UserRole.MANAGER, UserRole.ADMIN],
   PROCUREMENT_APPROVALS: [UserRole.PROCUREMENT_USER, UserRole.MANAGER, UserRole.ADMIN],
   PROCUREMENT_SUPPLIER: [UserRole.PROCUREMENT_USER, UserRole.MANAGER, UserRole.ADMIN],
-  HELP: [UserRole.VIEWER, UserRole.SALES_USER, UserRole.INVENTORY_USER, UserRole.PROCUREMENT_USER, UserRole.MANAGER, UserRole.ADMIN],
-  LANG_SWITCH: [UserRole.VIEWER, UserRole.SALES_USER, UserRole.INVENTORY_USER, UserRole.PROCUREMENT_USER, UserRole.MANAGER, UserRole.ADMIN],
-  UNKNOWN: [UserRole.VIEWER, UserRole.SALES_USER, UserRole.INVENTORY_USER, UserRole.PROCUREMENT_USER, UserRole.MANAGER, UserRole.ADMIN],
+  HELP: [
+    UserRole.VIEWER,
+    UserRole.SALES_USER,
+    UserRole.INVENTORY_USER,
+    UserRole.PROCUREMENT_USER,
+    UserRole.MANAGER,
+    UserRole.ADMIN,
+  ],
+  LANG_SWITCH: [
+    UserRole.VIEWER,
+    UserRole.SALES_USER,
+    UserRole.INVENTORY_USER,
+    UserRole.PROCUREMENT_USER,
+    UserRole.MANAGER,
+    UserRole.ADMIN,
+  ],
+  UNKNOWN: [
+    UserRole.VIEWER,
+    UserRole.SALES_USER,
+    UserRole.INVENTORY_USER,
+    UserRole.PROCUREMENT_USER,
+    UserRole.MANAGER,
+    UserRole.ADMIN,
+  ],
 };
 
 /**
