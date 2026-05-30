@@ -7,10 +7,7 @@
 import { ParsedIntent } from '../nlp/intentParser';
 import { BotResponse } from './salesHandler';
 import { InventoryConnector } from '../connectors/inventoryConnector';
-import {
-  buildInventoryAlertCard,
-  buildStockDetailCard,
-} from '../bot/adaptiveCards';
+import { buildInventoryAlertCard, buildStockDetailCard } from '../bot/adaptiveCards';
 import { getConfig } from '../utils/config';
 import enStrings from '../i18n/en.json';
 import heStrings from '../i18n/he.json';
@@ -58,7 +55,10 @@ export async function handleInventoryIntent(
       const skuCode = intent.entities.skuCode;
       if (!skuCode) {
         return {
-          text: lang === 'he' ? 'אנא ציין קוד מוצר, לדוגמה: SKU-0042' : 'Please specify a SKU code, e.g. SKU-0042',
+          text:
+            lang === 'he'
+              ? 'אנא ציין קוד מוצר, לדוגמה: SKU-0042'
+              : 'Please specify a SKU code, e.g. SKU-0042',
           language: lang,
           dataSource: 'Inventory',
         };

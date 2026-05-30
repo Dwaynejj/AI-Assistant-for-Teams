@@ -10,13 +10,7 @@
  *  - Error handling
  */
 
-import {
-  ActivityHandler,
-  TurnContext,
-  CardFactory,
-  MessageFactory,
-  TeamsInfo,
-} from 'botbuilder';
+import { ActivityHandler, TurnContext, CardFactory, MessageFactory } from 'botbuilder';
 import { v4 as uuidv4 } from 'uuid';
 import { parseIntent } from '../nlp/intentParser';
 import { handleSalesIntent } from '../handlers/salesHandler';
@@ -27,8 +21,6 @@ import { hasAccess } from '../auth/rbac';
 import { extractUserIdentity } from '../auth/aadAuth';
 import { logQuery, logError } from '../utils/logger';
 import {
-  conversationState,
-  userState,
   createConversationDataAccessor,
   createUserDataAccessor,
   getConversationData,
@@ -114,7 +106,8 @@ export class BIAgent extends ActivityHandler {
         return;
       }
 
-      let detectedLanguage: 'en' | 'he' = userData.preferredLanguage ?? conversationData.lastLanguage;
+      let detectedLanguage: 'en' | 'he' =
+        userData.preferredLanguage ?? conversationData.lastLanguage;
 
       try {
         // ── Parse intent ──────────────────────────────────────────────────────
@@ -136,7 +129,13 @@ export class BIAgent extends ActivityHandler {
           await context.sendActivity(
             MessageFactory.attachment(CardFactory.adaptiveCard(deniedCard)),
           );
-          await this.updateState(context, conversationData, userData, detectedLanguage, parsedIntent.intent);
+          await this.updateState(
+            context,
+            conversationData,
+            userData,
+            detectedLanguage,
+            parsedIntent.intent,
+          );
 
           logQuery(
             {
@@ -163,7 +162,11 @@ export class BIAgent extends ActivityHandler {
         } else if (INVENTORY_INTENTS.has(parsedIntent.intent)) {
           botResponse = await handleInventoryIntent(parsedIntent, sessionId);
         } else if (PROCUREMENT_INTENTS.has(parsedIntent.intent)) {
-          botResponse = await handleProcurementIntent(parsedIntent, userIdentity.objectId, sessionId);
+          botResponse = await handleProcurementIntent(
+            parsedIntent,
+            userIdentity.objectId,
+            sessionId,
+          );
         } else if (parsedIntent.intent === 'HELP' || parsedIntent.intent === 'LANG_SWITCH') {
           botResponse = handleHelpIntent(parsedIntent);
         } else {
@@ -193,22 +196,27 @@ export class BIAgent extends ActivityHandler {
           sessionId,
         );
 
-        await this.updateState(context, conversationData, userData, detectedLanguage, parsedIntent.intent);
+        await this.updateState(
+          context,
+          conversationData,
+          userData,
+          detectedLanguage,
+          parsedIntent.intent,
+        );
       } catch (err) {
         // ── Error handling ────────────────────────────────────────────────────
         const error = err instanceof Error ? err : new Error(String(err));
         logError(error, { userId: userIdentity.objectId, intent: 'ERROR' }, sessionId);
 
         const s = detectedLanguage === 'he' ? heStrings : enStrings;
-        const errorMessage =
-          error.message.includes('not found') ? s.error.no_data :
-          error.message.includes('timeout') ? s.error.timeout :
-          s.error.generic;
+        const errorMessage = error.message.includes('not found')
+          ? s.error.no_data
+          : error.message.includes('timeout')
+            ? s.error.timeout
+            : s.error.generic;
 
         const errorCard = buildErrorCard(errorMessage, detectedLanguage);
-        await context.sendActivity(
-          MessageFactory.attachment(CardFactory.adaptiveCard(errorCard)),
-        );
+        await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(errorCard)));
 
         logQuery(
           {
@@ -240,7 +248,12 @@ export class BIAgent extends ActivityHandler {
    */
   private async updateState(
     context: TurnContext,
-    conversationData: { lastLanguage: 'en' | 'he'; lastIntent: string; interactionCount: number; lastInteraction?: string },
+    conversationData: {
+      lastLanguage: 'en' | 'he';
+      lastIntent: string;
+      interactionCount: number;
+      lastInteraction?: string;
+    },
     userData: { preferredLanguage?: 'en' | 'he'; displayName?: string },
     language: 'en' | 'he',
     intent: string,

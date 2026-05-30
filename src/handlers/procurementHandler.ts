@@ -7,11 +7,7 @@
 import { ParsedIntent } from '../nlp/intentParser';
 import { BotResponse } from './salesHandler';
 import { ERPConnector } from '../connectors/erpConnector';
-import {
-  buildPOStatusCard,
-  buildApprovalListCard,
-  buildSupplierCard,
-} from '../bot/adaptiveCards';
+import { buildPOStatusCard, buildApprovalListCard, buildSupplierCard } from '../bot/adaptiveCards';
 import enStrings from '../i18n/en.json';
 import heStrings from '../i18n/he.json';
 
@@ -70,7 +66,15 @@ export async function handleProcurementIntent(
       // Extract category from text; fallback to "General"
       const text = intent.rawText.toLowerCase();
       let category = 'General';
-      const categoryKeywords = ['electronics', 'mechanical', 'heavy', 'electrical', 'אלקטרוניקה', 'מכני', 'כבד'];
+      const categoryKeywords = [
+        'electronics',
+        'mechanical',
+        'heavy',
+        'electrical',
+        'אלקטרוניקה',
+        'מכני',
+        'כבד',
+      ];
       for (const kw of categoryKeywords) {
         if (text.includes(kw)) {
           category = kw;

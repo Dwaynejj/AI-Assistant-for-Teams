@@ -206,16 +206,22 @@ export function buildPipelineCard(data: PipelineSummary, lang: Lang): AdaptiveCa
     type: 'AdaptiveCard',
     version: '1.5',
     body: [
-      buildHeader(
-        `${s.sales.pipeline.title}${data.quarter ? ` — ${data.quarter}` : ''}`,
-        lang,
-      ),
+      buildHeader(`${s.sales.pipeline.title}${data.quarter ? ` — ${data.quarter}` : ''}`, lang),
       {
         type: 'FactSet',
         facts: [
-          { title: s.sales.pipeline.total_value, value: formatCurrency(data.totalPipelineValue, 'USD', lang) },
-          { title: s.sales.pipeline.deals_closing, value: formatNumber(data.dealsClosingThisMonth, lang) },
-          { title: s.sales.pipeline.weighted_forecast, value: formatCurrency(data.weightedForecast, 'USD', lang) },
+          {
+            title: s.sales.pipeline.total_value,
+            value: formatCurrency(data.totalPipelineValue, 'USD', lang),
+          },
+          {
+            title: s.sales.pipeline.deals_closing,
+            value: formatNumber(data.dealsClosingThisMonth, lang),
+          },
+          {
+            title: s.sales.pipeline.weighted_forecast,
+            value: formatCurrency(data.weightedForecast, 'USD', lang),
+          },
           { title: s.sales.pipeline.win_rate, value: formatPercent(data.winRate, lang) },
           { title: s.sales.pipeline.top_rep, value: data.topRep },
           { title: s.sales.pipeline.at_risk, value: `⚠️ ${formatNumber(data.dealsAtRisk, lang)}` },
@@ -467,10 +473,7 @@ export function buildInventoryAlertCard(
     type: 'AdaptiveCard',
     version: '1.5',
     body: [
-      buildHeader(
-        hasCritical ? s.alerts.critical_stock.title : s.alerts.low_stock.title,
-        lang,
-      ),
+      buildHeader(hasCritical ? s.alerts.critical_stock.title : s.alerts.low_stock.title, lang),
       items.length === 0
         ? { type: 'TextBlock', text: s.inventory.no_low_stock, color: 'Good', wrap: true }
         : { type: 'Container', items: rows },
@@ -510,8 +513,13 @@ export function buildStockDetailCard(item: StockItem, lang: Lang): AdaptiveCard 
         facts: [
           { title: s.inventory.sku, value: item.skuCode },
           { title: s.inventory.on_hand, value: `${formatNumber(item.onHand, lang)} units` },
-          { title: s.inventory.minimum_level, value: `${formatNumber(item.minimumLevel, lang)} units` },
-          ...(item.warehouseName ? [{ title: s.inventory.warehouse, value: item.warehouseName }] : []),
+          {
+            title: s.inventory.minimum_level,
+            value: `${formatNumber(item.minimumLevel, lang)} units`,
+          },
+          ...(item.warehouseName
+            ? [{ title: s.inventory.warehouse, value: item.warehouseName }]
+            : []),
           ...(item.daysToStockout
             ? [{ title: s.inventory.days_to_stockout, value: String(item.daysToStockout) }]
             : []),
@@ -565,11 +573,19 @@ export function buildPOStatusCard(po: PurchaseOrder, lang: Lang): AdaptiveCard {
         type: 'FactSet',
         facts: [
           { title: s.procurement.po_status.supplier, value: po.supplier },
-          { title: s.procurement.po_status.value, value: formatCurrency(po.value, po.currency, lang) },
+          {
+            title: s.procurement.po_status.value,
+            value: formatCurrency(po.value, po.currency, lang),
+          },
           { title: 'Status', value: `${badge} ${po.status}` },
-          { title: s.procurement.po_status.expected_date, value: formatDate(po.expectedDate, lang) },
+          {
+            title: s.procurement.po_status.expected_date,
+            value: formatDate(po.expectedDate, lang),
+          },
           { title: s.procurement.po_status.line_items, value: String(po.lineItems) },
-          ...(po.supplierContact ? [{ title: s.procurement.po_status.contact, value: po.supplierContact }] : []),
+          ...(po.supplierContact
+            ? [{ title: s.procurement.po_status.contact, value: po.supplierContact }]
+            : []),
           ...(isOverdue && po.daysOverdue
             ? [{ title: 'Days Overdue', value: String(po.daysOverdue) }]
             : []),
@@ -615,9 +631,7 @@ export function buildApprovalListCard(pos: PurchaseOrder[], lang: Lang): Adaptiv
           {
             type: 'Column',
             width: 'auto',
-            items: [
-              { type: 'TextBlock', text: formatDate(po.expectedDate, lang), size: 'Small' },
-            ],
+            items: [{ type: 'TextBlock', text: formatDate(po.expectedDate, lang), size: 'Small' }],
           },
         ],
       },
@@ -639,7 +653,12 @@ export function buildApprovalListCard(pos: PurchaseOrder[], lang: Lang): Adaptiv
     body: [
       buildHeader(s.procurement.approvals.title, lang),
       pos.length === 0
-        ? { type: 'TextBlock', text: s.procurement.approvals.none_pending, color: 'Good', wrap: true }
+        ? {
+            type: 'TextBlock',
+            text: s.procurement.approvals.none_pending,
+            color: 'Good',
+            wrap: true,
+          }
         : {
             type: 'Container',
             items: [
@@ -685,9 +704,7 @@ export function buildSupplierCard(suppliers: Supplier[], lang: Lang): AdaptiveCa
           ...(sup.email
             ? [{ type: 'TextBlock', text: `📧 ${sup.email}`, size: 'Small', wrap: true }]
             : []),
-          ...(sup.phone
-            ? [{ type: 'TextBlock', text: `📞 ${sup.phone}`, size: 'Small' }]
-            : []),
+          ...(sup.phone ? [{ type: 'TextBlock', text: `📞 ${sup.phone}`, size: 'Small' }] : []),
         ],
       },
       ...(sup.rating
@@ -731,7 +748,6 @@ export function buildSupplierCard(suppliers: Supplier[], lang: Lang): AdaptiveCa
  * @returns Adaptive Card JSON object
  */
 export function buildErrorCard(errorMessage: string, lang: Lang): AdaptiveCard {
-  const s = t(lang);
   return {
     $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
     type: 'AdaptiveCard',
@@ -742,7 +758,13 @@ export function buildErrorCard(errorMessage: string, lang: Lang): AdaptiveCard {
         style: 'attention',
         bleed: true,
         items: [
-          { type: 'TextBlock', text: '⚠️ Error', size: 'Large', weight: 'Bolder', color: 'Attention' },
+          {
+            type: 'TextBlock',
+            text: '⚠️ Error',
+            size: 'Large',
+            weight: 'Bolder',
+            color: 'Attention',
+          },
         ],
       },
       {
@@ -785,19 +807,31 @@ export function buildHelpCard(lang: Lang): AdaptiveCard {
       title: isHe ? '📊 מודיעין מכירות' : '📊 Sales Intelligence',
       commands: isHe
         ? ['מה ערך הפייפליין הרבעוני?', 'הצג לי עסקאות הנסגרות החודש', 'מי נציג המכירות המוביל?']
-        : ['What is the total pipeline value for Q3?', 'Show me deals closing this month', 'Which rep has the highest revenue?'],
+        : [
+            'What is the total pipeline value for Q3?',
+            'Show me deals closing this month',
+            'Which rep has the highest revenue?',
+          ],
     },
     {
       title: isHe ? '🏭 ניהול מלאי' : '🏭 Inventory Management',
       commands: isHe
         ? ['אילו פריטים מתחת לרמת מלאי מינימלית?', 'הצג מלאי ל-SKU-0042', 'כמה יחידות יש לנו?']
-        : ['What items are below minimum stock?', 'Show inventory for SKU-0042', 'How many units do we have?'],
+        : [
+            'What items are below minimum stock?',
+            'Show inventory for SKU-0042',
+            'How many units do we have?',
+          ],
     },
     {
       title: isHe ? '📦 תמיכה ברכש' : '📦 Procurement Support',
       commands: isHe
         ? ['מה הסטטוס של PO-20250618?', 'אילו הזמנות ממתינות לאישור?', 'רשימת ספקים לאלקטרוניקה']
-        : ['What is the status of PO-20250618?', 'Which POs need my approval?', 'List suppliers for electronics'],
+        : [
+            'What is the status of PO-20250618?',
+            'Which POs need my approval?',
+            'List suppliers for electronics',
+          ],
     },
     {
       title: isHe ? '🌐 הגדרות שפה' : '🌐 Language Settings',

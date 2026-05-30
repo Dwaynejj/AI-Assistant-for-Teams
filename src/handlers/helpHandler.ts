@@ -23,7 +23,8 @@ export function handleHelpIntent(intent: ParsedIntent): BotResponse {
   if (intent.intent === 'LANG_SWITCH' && intent.entities.language) {
     const newLang = intent.entities.language;
     return {
-      text: newLang === 'he' ? heStrings.common.language_switched : enStrings.common.language_switched,
+      text:
+        newLang === 'he' ? heStrings.common.language_switched : enStrings.common.language_switched,
       adaptiveCard: buildHelpCard(newLang),
       language: newLang,
       dataSource: 'BIAgent',
