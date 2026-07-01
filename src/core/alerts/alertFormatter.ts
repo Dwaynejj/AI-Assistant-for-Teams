@@ -4,7 +4,7 @@
  */
 
 import { Alert } from './alertEngine';
-import { buildInventoryAlertCard, buildApprovalListCard } from '../bot/adaptiveCards';
+import { buildInventoryAlertCard, buildApprovalListCard } from '../cards/adaptiveCards';
 import { StockItem } from '../connectors/inventoryConnector';
 import { PurchaseOrder } from '../connectors/erpConnector';
 import { getConfig } from '../utils/config';

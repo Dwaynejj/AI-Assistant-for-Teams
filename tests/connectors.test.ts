@@ -4,11 +4,11 @@
  * Tests use mock data and do not make real HTTP calls.
  */
 
-import { initConfig } from '../src/utils/config';
-import { CRMConnector } from '../src/connectors/crmConnector';
-import { InventoryConnector } from '../src/connectors/inventoryConnector';
-import { ERPConnector } from '../src/connectors/erpConnector';
-import { ConnectorError } from '../src/connectors/baseConnector';
+import { initConfig } from '../src/core/utils/config';
+import { CRMConnector } from '../src/core/connectors/crmConnector';
+import { InventoryConnector } from '../src/core/connectors/inventoryConnector';
+import { ERPConnector } from '../src/core/connectors/erpConnector';
+import { ConnectorError } from '../src/core/connectors/baseConnector';
 
 // Mock axios to prevent real HTTP calls
 jest.mock('axios', () => ({

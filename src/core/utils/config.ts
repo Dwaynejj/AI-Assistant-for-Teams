@@ -72,11 +72,19 @@ export interface Config {
   defaultLanguage: 'en' | 'he';
   botServiceUrl: string;
   useMockData?: boolean;
+  /**
+   * True whenever the app is NOT running with NODE_ENV=production.
+   * In demo mode, missing Azure/Teams/CRM/ERP credentials are auto-filled with
+   * safe local defaults instead of failing startup, and mock data is used
+   * unless USE_MOCK_DATA is explicitly overridden.
+   */
+  demoMode: boolean;
 }
 
 /**
- * Required environment variable keys that must be present for the application to start.
- * Optional keys are not listed here.
+ * Environment variable keys that must be present for the application to start
+ * in production. These are never required for local development or the Web
+ * Chat demo — see `applyDemoDefaults()`.
  */
 const REQUIRED_KEYS: ReadonlyArray<string> = [
   'MICROSOFT_APP_ID',
@@ -98,6 +106,49 @@ const REQUIRED_KEYS: ReadonlyArray<string> = [
   'AAD_ROLE_GROUP_MANAGER',
   'AAD_ROLE_GROUP_ADMIN',
 ];
+
+/**
+ * Safe local-only defaults applied to any missing key when NOT running in
+ * production. This is what makes `npm run dev` work with zero `.env` setup:
+ * every connector already falls back to mock data when its URL looks like
+ * one of these placeholders (see `crmConnector.ts`, `erpConnector.ts`,
+ * `inventoryConnector.ts`).
+ */
+const DEMO_DEFAULTS: Readonly<Record<string, string>> = {
+  MICROSOFT_APP_ID: '',
+  MICROSOFT_APP_PASSWORD: '',
+  CRM_API_URL: 'https://mock-crm.example.com/api',
+  CRM_API_KEY: 'demo-local-key',
+  ERP_API_URL: 'https://mock-erp.example.com/api',
+  ERP_API_KEY: 'demo-local-key',
+  INVENTORY_DB_CONNECTION_STRING: 'mock://inventory.example.com',
+  LOW_STOCK_THRESHOLD: '50',
+  CRITICAL_STOCK_THRESHOLD: '10',
+  PO_OVERDUE_DAYS: '3',
+  ALERT_TEAMS_CHANNEL_ID: '',
+  ALERT_TEAMS_TEAM_ID: '',
+  AAD_TENANT_ID: '',
+  AAD_ROLE_GROUP_SALES: '',
+  AAD_ROLE_GROUP_INVENTORY: '',
+  AAD_ROLE_GROUP_PROCUREMENT: '',
+  AAD_ROLE_GROUP_MANAGER: '',
+  AAD_ROLE_GROUP_ADMIN: '',
+};
+
+/**
+ * Fill in any missing environment variables with safe local demo defaults.
+ * Only ever called when NODE_ENV !== 'production'. Existing values (from a
+ * partially-filled .env) are always respected and never overwritten.
+ *
+ * @param env - The mutable environment map to patch in place
+ */
+function applyDemoDefaults(env: Record<string, string | undefined>): void {
+  for (const [key, value] of Object.entries(DEMO_DEFAULTS)) {
+    if (!env[key]) {
+      env[key] = value;
+    }
+  }
+}
 
 /**
  * Attempt to load secrets from Azure Key Vault.
@@ -151,18 +202,23 @@ async function loadFromKeyVault(keyVaultUrl: string): Promise<Record<string, str
 
 /**
  * Validate that all required environment keys are present.
+ * Only enforced in production — local development and the Web Chat demo run
+ * entirely on mock data and never need real Azure/Teams/CRM/ERP credentials.
  * Throws a descriptive error listing all missing keys on failure.
  *
  * @param env - The merged environment map to validate
+ * @param isProduction - Whether the app is starting with NODE_ENV=production
  */
-function validateConfig(env: Record<string, string | undefined>): void {
+function validateConfig(env: Record<string, string | undefined>, isProduction: boolean): void {
+  if (!isProduction) return;
+
   const missing = REQUIRED_KEYS.filter((key) => !env[key]);
   if (!env['APPINSIGHTS_INSTRUMENTATIONKEY'] && !env['APPLICATIONINSIGHTS_CONNECTION_STRING']) {
     missing.push('APPINSIGHTS_INSTRUMENTATIONKEY or APPLICATIONINSIGHTS_CONNECTION_STRING');
   }
   if (missing.length > 0) {
     throw new Error(
-      `[Config] Missing required environment variables:\n  ${missing.join('\n  ')}\n` +
+      `[Config] Missing required environment variables for production:\n  ${missing.join('\n  ')}\n` +
         `Copy .env.example to .env and fill in all required values.`,
     );
   }
@@ -177,6 +233,7 @@ function validateConfig(env: Record<string, string | undefined>): void {
 export async function loadConfig(): Promise<Config> {
   // Start with process.env
   const env: Record<string, string | undefined> = { ...process.env };
+  const isProduction = env['NODE_ENV'] === 'production';
 
   // Attempt Key Vault overlay
   const keyVaultUrl = process.env['KEY_VAULT_URL'];
@@ -186,12 +243,22 @@ export async function loadConfig(): Promise<Config> {
     Object.assign(env, kvSecrets);
   }
 
-  // Validate all required keys before constructing Config
-  validateConfig(env);
+  // Outside production, patch in safe local defaults for anything missing so
+  // the app can boot — and the Web Chat demo can run — with zero .env setup.
+  if (!isProduction) {
+    applyDemoDefaults(env);
+  }
+
+  // Validate all required keys before constructing Config (production only)
+  validateConfig(env, isProduction);
 
   const defaultLang = (env['DEFAULT_LANGUAGE'] ?? 'en') as 'en' | 'he';
   const useMockData =
-    env['USE_MOCK_DATA'] !== undefined ? env['USE_MOCK_DATA'] === 'true' : undefined;
+    env['USE_MOCK_DATA'] !== undefined
+      ? env['USE_MOCK_DATA'] === 'true'
+      : isProduction
+        ? undefined
+        : true;
 
   return {
     microsoftAppId: env['MICROSOFT_APP_ID']!,
@@ -235,6 +302,7 @@ export async function loadConfig(): Promise<Config> {
     defaultLanguage: defaultLang,
     botServiceUrl: env['BOT_SERVICE_URL'] ?? 'https://smba.trafficmanager.net/teams/',
     useMockData,
+    demoMode: !isProduction,
   };
 }
 
@@ -256,7 +324,7 @@ export function getConfig(): Config {
 
 /**
  * Initialise the application configuration singleton.
- * Should be called exactly once, at the very start of src/index.ts.
+ * Should be called exactly once, at the very start of src/server.ts.
  *
  * @returns The loaded Config object
  */
@@ -268,11 +336,15 @@ export async function initConfig(): Promise<Config> {
 /**
  * Initialise Azure Application Insights using the loaded config.
  * Must be called before any other module to ensure all requests are tracked.
+ * No-op when no instrumentation key/connection string is configured (e.g.
+ * local demo mode) — audit logging simply falls back to console output.
  *
  * @param config - The loaded application config
  */
 export function initAppInsights(config: Config): void {
   const setupKey = config.appInsightsConnectionString || config.appInsightsInstrumentationKey;
+  if (!setupKey) return;
+
   appInsights
     .setup(setupKey)
     .setAutoDependencyCorrelation(true)

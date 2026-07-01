@@ -12,13 +12,7 @@ import { getConfig } from '../utils/config';
 // ─────────────────────────────────────────────
 
 export type POStatus =
-  | 'OPEN'
-  | 'APPROVED'
-  | 'IN_TRANSIT'
-  | 'DELIVERED'
-  | 'OVERDUE'
-  | 'CANCELLED'
-  | 'PENDING_APPROVAL';
+  'OPEN' | 'APPROVED' | 'IN_TRANSIT' | 'DELIVERED' | 'OVERDUE' | 'CANCELLED' | 'PENDING_APPROVAL';
 
 export interface PurchaseOrder {
   poNumber: string;

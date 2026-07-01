@@ -1,115 +1,208 @@
-# Teams BI Agent 🤖
+# BIAgent — Business Intelligence Assistant 🤖
 
-> **Enterprise-grade bilingual Business Intelligence bot for Microsoft Teams**
-> English | עברית
+> **Bilingual (English | עברית) BI bot for Microsoft Teams — with a zero-setup browser demo anyone can run right now**
 
 ---
 
-## Overview
+## Run it in under a minute (no Azure account, no Teams, no `.env` needed)
 
-**BIAgent** is a Microsoft Teams bot that serves as a single intelligent interface for querying live business data across Sales (CRM), Inventory, and Procurement (ERP) systems — without leaving the Teams environment.
+```bash
+git clone https://github.com/your-org/teams-bi-agent
+cd teams-bi-agent
+npm install
+npm run dev
+```
 
-Users interact in **natural language** (English or Hebrew) and receive structured, actionable Adaptive Card responses in under 30 seconds.
+Open **http://localhost:3978** in your browser and start chatting.
 
-### Key Features
+The app boots in **demo mode** — it uses built-in mock data for Sales, Inventory, and Procurement, so you can explore every feature immediately with no credentials.
+
+### Try these queries in the chat window
+
+| English | Hebrew |
+|---|---|
+| `show me the sales pipeline` | `מה ערך הפייפליין הרבעוני?` |
+| `what is our win rate for the last 90 days?` | `מה שיעור הניצחון ב-90 ימים האחרונים?` |
+| `what items are below minimum stock?` | `אילו פריטים מתחת לרמת מלאי מינימלית?` |
+| `show inventory for SKU-0042` | `הצג מלאי ל-SKU-0042` |
+| `what is the status of PO-20250618?` | `מה הסטטוס של הזמנת רכש PO-20250618?` |
+| `which POs are awaiting approval?` | `אילו הזמנות ממתינות לאישור?` |
+| `help` | `עזרה` |
+
+Click **Preview Alerts** in the chat to see what a proactive stock or PO alert would look like when pushed to a real Teams channel.
+
+---
+
+## What this is
+
+**BIAgent** is an enterprise-grade bilingual Business Intelligence bot that gives users a single natural-language interface to query live data across Sales (CRM), Inventory, and Procurement (ERP) systems — either in **Microsoft Teams** or directly in a **browser**.
+
+### Key features
 
 | Feature | Status |
 |---|---|
-| Sales Intelligence (Pipeline, Performance, Deals) | ✅ MVP |
-| Inventory Management (Stock Levels, SKU Lookup, Alerts) | ✅ MVP |
-| Procurement Support (PO Status, Approvals, Suppliers) | ✅ MVP |
-| Hebrew + English NLP | ✅ MVP |
-| Adaptive Card Responses (RTL-aware) | ✅ MVP |
-| Proactive Channel Alerts (every 30 min) | ✅ MVP |
-| Azure AD RBAC | ✅ MVP |
-| Application Insights Audit Logging | ✅ MVP |
-| Azure Key Vault Secrets | ✅ MVP |
+| Sales pipeline, performance & deal lookup | ✅ |
+| Inventory levels, alerts & SKU lookup | ✅ |
+| Procurement PO status, approvals & supplier info | ✅ |
+| Natural language — English + Hebrew (RTL-aware) | ✅ |
+| Adaptive Card responses (Teams and browser) | ✅ |
+| Proactive channel alerts every 30 min (Azure Function) | ✅ |
+| Azure AD RBAC (demo mode grants full access) | ✅ |
+| Application Insights audit logging | ✅ |
+| Azure Key Vault secrets | ✅ |
+| **Browser demo — zero setup, zero credentials** | ✅ NEW |
 
 ---
 
 ## Architecture
 
-```
-Microsoft Teams
-     │ HTTPS / Bot Framework SDK
-     ▼
-Express.js Server (Azure App Service)
-├── POST /api/messages  ← Bot Framework activity endpoint
-├── GET  /health        ← Health check
-│
-├── NLP Layer (Azure AI Language + keyword fallback)
-│   ├── Language Detection (EN / HE)
-│   ├── Intent Classification (11 intents)
-│   └── Entity Extraction (PO, SKU, dates, amounts)
-│
-├── RBAC (Azure AD Groups → Roles)
-│
-├── Handlers
-│   ├── salesHandler.ts     → CRM Connector
-│   ├── inventoryHandler.ts → Inventory Connector
-│   ├── procurementHandler.ts → ERP Connector
-│   └── helpHandler.ts
-│
-└── Adaptive Cards (schema 1.5, RTL-aware)
+The codebase is split into a **channel-agnostic core engine** and thin **channel adapters**:
 
-Azure Functions (Alert Scheduler — every 30 min)
-└── alertEngine.ts → teamsNotifier.ts
+```
+Browser (Web Chat)          Microsoft Teams
+      │                           │
+      │  POST /api/chat           │  POST /api/messages
+      ▼                           ▼
+src/channels/web/          src/channels/teams/
+webChatRouter.ts           biAgent.ts
+      │                           │
+      └──────────┬────────────────┘
+                 ▼
+          src/core/  (shared engine)
+          ├── nlp/           NLP: intent + language + entities
+          │   ├── intentParser.ts   (Azure CLU + keyword fallback)
+          │   ├── languageDetector.ts
+          │   └── entities.ts
+          ├── auth/          RBAC: Azure AD groups → roles
+          ├── handlers/      Domain logic (Sales / Inventory / Procurement)
+          ├── connectors/    CRM / ERP / Inventory (with mock fallback)
+          ├── cards/         Adaptive Card builders (RTL-aware)
+          ├── alerts/        Proactive alert engine + formatter
+          ├── i18n/          String bundles (en.json, he.json)
+          └── utils/         Config, logger, formatter
+
+functions/alertScheduler/   Azure Function timer trigger (every 30 min)
+```
+
+Both channels run the **identical** NLP → RBAC → handler → Adaptive Card pipeline. Business logic lives in exactly one place.
+
+---
+
+## Project structure
+
+```
+teams-bi-agent/
+├── src/
+│   ├── server.ts                    ← Express entry point (Teams + Web Chat)
+│   ├── core/                        ← Channel-agnostic engine
+│   │   ├── engine.ts                ← Single intent-routing entry point
+│   │   ├── nlp/
+│   │   │   ├── intentParser.ts      ← Azure CLU + keyword fallback
+│   │   │   ├── languageDetector.ts  ← EN/HE detection
+│   │   │   └── entities.ts          ← PO, SKU, date, amount extraction
+│   │   ├── connectors/
+│   │   │   ├── baseConnector.ts     ← HTTP client with retry + TLS
+│   │   │   ├── crmConnector.ts      ← CRM adapter (mock or live)
+│   │   │   ├── erpConnector.ts      ← ERP adapter (mock or live)
+│   │   │   └── inventoryConnector.ts
+│   │   ├── handlers/
+│   │   │   ├── salesHandler.ts
+│   │   │   ├── inventoryHandler.ts
+│   │   │   ├── procurementHandler.ts
+│   │   │   └── helpHandler.ts
+│   │   ├── alerts/
+│   │   │   ├── alertEngine.ts       ← Threshold detection + deduplication
+│   │   │   └── alertFormatter.ts    ← Alert → Adaptive Card
+│   │   ├── auth/
+│   │   │   ├── rbac.ts              ← Role-based access (ADMIN in demo mode)
+│   │   │   └── aadAuth.ts           ← AAD identity extraction
+│   │   ├── cards/
+│   │   │   └── adaptiveCards.ts     ← All 10 Adaptive Card builders
+│   │   ├── i18n/
+│   │   │   ├── en.json
+│   │   │   └── he.json
+│   │   └── utils/
+│   │       ├── config.ts            ← Key Vault + env config (demo defaults)
+│   │       ├── logger.ts            ← App Insights wrapper
+│   │       └── formatter.ts         ← Currency, date, number formatting
+│   └── channels/
+│       ├── teams/                   ← Microsoft Teams (Bot Framework)
+│       │   ├── biAgent.ts           ← ActivityHandler subclass
+│       │   ├── conversationState.ts
+│       │   └── teamsNotifier.ts     ← Proactive channel posting
+│       └── web/                     ← Browser demo channel
+│           ├── webChatRouter.ts     ← POST /api/chat, GET /api/alerts/preview
+│           ├── webSession.ts        ← In-memory session store
+│           └── public/              ← Static Web Chat UI (no build step)
+│               ├── index.html
+│               ├── app.js           ← Vanilla-JS Adaptive Card renderer
+│               └── style.css
+├── functions/
+│   └── alertScheduler/
+│       ├── index.ts                 ← Azure Function timer trigger
+│       └── function.json            ← Schedule: every 30 minutes
+├── tests/
+│   ├── setup.ts
+│   ├── bot.test.ts
+│   ├── nlp.test.ts
+│   ├── connectors.test.ts
+│   ├── alerts.test.ts
+│   └── webChat.test.ts              ← Demo mode + /api/chat endpoint tests
+├── scripts/
+│   └── copyAssets.js                ← Copies web/public → dist after tsc
+├── deployment/
+│   └── teams-manifest/
+│       ├── manifest.json
+│       ├── color.png
+│       └── outline.png
+├── .env.example
+├── jest.config.ts
+├── tsconfig.json
+└── package.json
 ```
 
 ---
 
-## Prerequisites
+## Development scripts
+
+```bash
+npm run dev          # Start dev server with ts-node (http://localhost:3978)
+npm test             # Run all Jest tests (88 tests, ~15 s)
+npm run typecheck    # TypeScript type check (no emit)
+npm run lint         # ESLint — zero-warning policy
+npm run lint:fix     # Auto-fix lint issues
+npm run build        # tsc + copy static assets → dist/
+npm start            # Start compiled production build
+npm run format       # Prettier format all files
+npm run audit:ci     # npm audit (CI security check)
+```
+
+---
+
+## Demo mode vs. production mode
+
+| | Demo mode (default) | Production (`NODE_ENV=production`) |
+|---|---|---|
+| Trigger | Any `NODE_ENV` other than `"production"` | `NODE_ENV=production` |
+| Credentials required | **None** | All credentials in `.env.example` |
+| Data source | Built-in mock data | Live CRM / ERP / Inventory APIs |
+| RBAC | Full access for all users | Azure AD group membership |
+| Application Insights | Disabled (console logging) | Required |
+| Bot Framework auth | Skipped locally | Required |
+| Web Chat demo (`/`) | ✅ Always available | ✅ Always available |
+
+In demo mode the app auto-fills all missing env vars with safe local defaults (empty strings for credentials, `mock://` URLs for systems). No `.env` file is needed at all.
+
+---
+
+## Production Deployment
+
+### Prerequisites
 
 - Node.js 18+
-- npm 9+
 - Azure subscription (Bot Service, App Service, Key Vault, AI Language)
 - Microsoft 365 tenant with Teams admin access
 - API credentials for your CRM, ERP, and Inventory systems
-
----
-
-## Local Development Setup
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/your-org/teams-bi-agent
-cd teams-bi-agent
-```
-
-### 2. Install dependencies
-
-```bash
-npm install
-```
-
-### 3. Configure environment variables
-
-```bash
-cp .env.example .env
-# Edit .env and fill in all required values
-```
-
-For local development without real backends, the bot will automatically use **mock data** when the API URLs contain `mock` or `example.com`.
-
-### 4. Start the development server
-
-```bash
-npm run dev
-# Server starts on http://localhost:3978
-# Health check: http://localhost:3978/health
-# Bot endpoint: http://localhost:3978/api/messages
-```
-
-### 5. Test with Bot Framework Emulator
-
-1. Download [Bot Framework Emulator](https://github.com/microsoft/BotFramework-Emulator)
-2. Connect to `http://localhost:3978/api/messages`
-3. Leave App ID and Password blank for local testing
-
----
-
-## Azure Deployment
 
 ### Step 1 — Register the Bot
 
@@ -158,9 +251,11 @@ az webapp config appsettings set \
   --name teams-bi-agent \
   --resource-group <your-rg> \
   --settings \
+    NODE_ENV="production" \
     KEY_VAULT_URL="https://teams-bi-kv.vault.azure.net/" \
     MICROSOFT_APP_ID="<app-id>" \
     CRM_API_URL="https://your-crm.com/api" \
+    AAD_TENANT_ID="<tenant-id>"
     # ... (see .env.example for full list)
 ```
 
@@ -193,175 +288,67 @@ az webapp up \
 
 ---
 
-## Usage
+## Access Control (RBAC)
 
-### English Queries
-
-```
-@BIAgent show me the sales pipeline for Q3
-@BIAgent what is our win rate for the last 90 days?
-@BIAgent show inventory for SKU-0042
-@BIAgent what items are below minimum stock level?
-@BIAgent what is the status of PO-20250618?
-@BIAgent which POs are awaiting my approval?
-@BIAgent list suppliers for electronics
-@BIAgent help
-```
-
-### Hebrew Queries (שאילתות בעברית)
-
-```
-@BIAgent מה ערך הפייפליין הרבעוני?
-@BIAgent הצג לי עסקאות הנסגרות החודש
-@BIAgent אילו פריטים מתחת לרמת מלאי מינימלית?
-@BIAgent הצג מלאי ל-SKU-0042
-@BIAgent מה הסטטוס של הזמנת רכש PO-20250618?
-@BIAgent עזרה
-```
-
-### Language Switching
-
-```
-/lang en   → Switch to English
-/lang he   → עבור לעברית
-```
-
----
-
-## Available Commands / Intents
-
-| Intent | English Triggers | Hebrew Triggers |
-|---|---|---|
-| `SALES_PIPELINE` | pipeline, forecast, deals | פייפליין, תחזית, עסקאות |
-| `SALES_PERFORMANCE` | performance, quota, win rate | ביצועים, מכסה, שיעור ניצחון |
-| `SALES_DEAL_DETAIL` | deal status, specific deal | סטטוס עסקה, עסקה ספציפית |
-| `INVENTORY_LEVELS` | stock, inventory, on hand | מלאי, יחידות, כמות |
-| `INVENTORY_ALERTS` | low stock, shortage, critical | מלאי נמוך, מחסור, קריטי |
-| `INVENTORY_SKU` | SKU-XXXX, product code | קוד מוצר, SKU |
-| `PROCUREMENT_PO_STATUS` | PO-XXXXXXXX, purchase order | הזמנת רכש, סטטוס הזמנה |
-| `PROCUREMENT_APPROVALS` | pending approval, my approvals | ממתין לאישור, אישורים שלי |
-| `PROCUREMENT_SUPPLIER` | supplier, vendor | ספק, רשימת ספקים |
-| `HELP` | help, what can you do | עזרה, מה אתה יכול |
-
----
-
-## Access Control
-
-Roles are mapped to **Azure AD groups** (no separate user management needed):
+Roles are mapped from **Azure AD group membership** — no separate user management.
 
 | Role | Access |
 |---|---|
-| `VIEWER` | HELP and LANG_SWITCH only |
-| `SALES_USER` | All SALES_* intents |
-| `INVENTORY_USER` | All INVENTORY_* intents |
-| `PROCUREMENT_USER` | All PROCUREMENT_* intents |
+| `VIEWER` | HELP and language switching only |
+| `SALES_USER` | All `SALES_*` intents |
+| `INVENTORY_USER` | All `INVENTORY_*` intents |
+| `PROCUREMENT_USER` | All `PROCUREMENT_*` intents |
 | `MANAGER` | All modules |
 | `ADMIN` | Full access |
 
-Configure role group IDs in environment variables:
+In **demo mode** every user is automatically granted `ADMIN` access so all features are explorable without any Azure AD setup.
+
+Configure group Object IDs in `.env` (production only):
 ```
 AAD_ROLE_GROUP_SALES=<azure-ad-group-object-id>
 AAD_ROLE_GROUP_INVENTORY=<azure-ad-group-object-id>
-# ...
+# ... (see .env.example)
 ```
 
 ---
 
 ## Alert System
 
-The alert scheduler (Azure Function) runs **every 30 minutes** and posts to the configured Teams channel when:
+The Azure Function scheduler (`functions/alertScheduler/`) runs **every 30 minutes** and posts Adaptive Card alerts to the configured Teams channel when:
 
-- 🔴 **CRITICAL_STOCK**: Any SKU has `onHand ≤ CRITICAL_STOCK_THRESHOLD` (default: 10)
-- 🟡 **LOW_STOCK**: Any SKU has `onHand < LOW_STOCK_THRESHOLD` (default: 50)
-- ⚠️ **PO_OVERDUE**: Any purchase order is past its expected delivery date
+- 🔴 **CRITICAL_STOCK** — any SKU has `onHand ≤ CRITICAL_STOCK_THRESHOLD` (default: 10)
+- 🟡 **LOW_STOCK** — any SKU has `onHand < LOW_STOCK_THRESHOLD` (default: 50)
+- ⚠️ **PO_OVERDUE** — any PO is past its expected delivery date
 
-Alerts are **deduplicated** — the same alert is not resent within the 30-minute check interval.
+Alerts are **deduplicated** — the same alert is never resent within the 30-minute interval.
 
----
-
-## Development Scripts
-
-```bash
-npm run build        # TypeScript compile → dist/
-npm run dev          # ts-node dev server (with hot reload)
-npm test             # Run all Jest tests
-npm run lint         # ESLint with zero-warning policy
-npm run lint:fix     # Auto-fix lint issues
-npm run format       # Prettier format
-npm run typecheck    # TypeScript type check (no emit)
-npm run audit:ci     # npm audit (CI security check)
-```
+You can preview what these look like without a real Teams channel by clicking **Preview Alerts** in the browser demo or calling `GET /api/alerts/preview`.
 
 ---
 
-## Project Structure
+## Available Intents
 
-```
-teams-bi-agent/
-├── src/
-│   ├── bot/
-│   │   ├── biAgent.ts           ← Main bot class (ActivityHandler)
-│   │   ├── adaptiveCards.ts     ← All 10 Adaptive Card builders
-│   │   └── conversationState.ts ← State management
-│   ├── nlp/
-│   │   ├── intentParser.ts      ← CLU + keyword fallback
-│   │   ├── languageDetector.ts  ← EN/HE detection
-│   │   └── entities.ts          ← Entity extraction
-│   ├── connectors/
-│   │   ├── baseConnector.ts     ← HTTP client + retry logic
-│   │   ├── crmConnector.ts      ← CRM API adapter
-│   │   ├── erpConnector.ts      ← ERP API adapter
-│   │   └── inventoryConnector.ts← Inventory adapter
-│   ├── handlers/
-│   │   ├── salesHandler.ts
-│   │   ├── inventoryHandler.ts
-│   │   ├── procurementHandler.ts
-│   │   └── helpHandler.ts
-│   ├── alerts/
-│   │   ├── alertEngine.ts       ← Threshold detection + dedup
-│   │   ├── alertFormatter.ts    ← Alert → Adaptive Card
-│   │   └── teamsNotifier.ts     ← Proactive channel posting
-│   ├── auth/
-│   │   ├── aadAuth.ts           ← AAD identity extraction
-│   │   └── rbac.ts              ← Role-based access control
-│   ├── i18n/
-│   │   ├── en.json              ← English strings
-│   │   └── he.json              ← Hebrew strings (RTL)
-│   ├── utils/
-│   │   ├── config.ts            ← Key Vault + env config
-│   │   ├── logger.ts            ← Application Insights wrapper
-│   │   └── formatter.ts         ← Formatting utilities
-│   └── index.ts                 ← Express entry point
-├── functions/
-│   └── alertScheduler/
-│       ├── index.ts             ← Azure Function timer trigger
-│       └── function.json        ← Function binding (every 30 min)
-├── tests/
-│   ├── setup.ts                 ← Jest global setup
-│   ├── bot.test.ts
-│   ├── nlp.test.ts
-│   ├── connectors.test.ts
-│   └── alerts.test.ts
-├── deployment/
-│   └── teams-manifest/
-│       ├── manifest.json        ← Teams App Manifest v1.16
-│       ├── color.png            ← 192×192 app icon
-│       └── outline.png          ← 32×32 outline icon
-├── .env.example
-├── .eslintrc.json
-├── .prettierrc
-├── jest.config.ts
-├── tsconfig.json
-└── package.json
-```
+| Intent | English triggers | Hebrew triggers |
+|---|---|---|
+| `SALES_PIPELINE` | pipeline, forecast, deals | פייפליין, תחזית, עסקאות |
+| `SALES_PERFORMANCE` | performance, quota, win rate | ביצועים, מכסה, שיעור ניצחון |
+| `SALES_DEAL_DETAIL` | deal status, specific deal | סטטוס עסקה |
+| `INVENTORY_LEVELS` | stock, inventory, on hand | מלאי, יחידות, כמות |
+| `INVENTORY_ALERTS` | low stock, shortage, critical | מלאי נמוך, מחסור, קריטי |
+| `INVENTORY_SKU` | SKU-XXXX, product code | קוד מוצר, SKU |
+| `PROCUREMENT_PO_STATUS` | PO-XXXXXXXX, purchase order | הזמנת רכש, סטטוס הזמנה |
+| `PROCUREMENT_APPROVALS` | pending approval | ממתין לאישור |
+| `PROCUREMENT_SUPPLIER` | supplier, vendor | ספק |
+| `HELP` | help, what can you do | עזרה |
+| `LANG_SWITCH` | `/lang en` / `/lang he` | `/lang he` / `/lang en` |
 
 ---
 
 ## Security
 
-- **No secrets in code** — all credentials via Key Vault or env vars
-- **No business data stored** — all data retrieved live per query
-- **TLS enforced** — `rejectUnauthorized: true` on all outbound HTTP
+- **No secrets in code** — all credentials via Key Vault or environment variables
+- **No business data stored** — all data is fetched live per query
+- **TLS enforced** — `rejectUnauthorized: true` on all outbound HTTP connections
 - **Input sanitisation** — HTML and control characters stripped from all user input
 - **RBAC enforced** — every query checked before handler execution
 - **Audit logging** — every query logged to Application Insights via `logQuery()`
@@ -375,22 +362,9 @@ teams-bi-agent/
 |---|---|
 | Query response time | < 30 seconds |
 | Connector timeout | 20 seconds |
-| Retry attempts | 3 (500ms, 1s, 2s backoff) |
-| Bot uptime | > 99.5% |
+| Retry attempts | 3 (500 ms, 1 s, 2 s backoff) |
 | Alert delivery latency | < 2 minutes |
 
 ---
 
-## Support
-
-| Issue | Action |
-|---|---|
-| Bot not responding | Check Azure App Service status; run `GET /health` |
-| Wrong data returned | Log an issue with the query text and expected result |
-| Access denied | Request role assignment from IT/HR |
-| Hebrew language issues | Submit example to NLP improvement backlog |
-| Security concern | Escalate directly to CISO — do not log publicly |
-
----
-
-*Teams BI Agent v1.0 — Built to spec by BIAgent Builder*
+*BIAgent v1.0 — run it in your browser in under a minute, deploy to Teams when you're ready*

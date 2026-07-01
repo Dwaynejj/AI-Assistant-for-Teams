@@ -6,7 +6,7 @@
 
 import { ParsedIntent } from '../nlp/intentParser';
 import { BotResponse } from './salesHandler';
-import { buildHelpCard } from '../bot/adaptiveCards';
+import { buildHelpCard } from '../cards/adaptiveCards';
 import enStrings from '../i18n/en.json';
 import heStrings from '../i18n/he.json';
 

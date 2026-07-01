@@ -12,35 +12,21 @@
 
 import { ActivityHandler, TurnContext, CardFactory, MessageFactory } from 'botbuilder';
 import { v4 as uuidv4 } from 'uuid';
-import { parseIntent } from '../nlp/intentParser';
-import { handleSalesIntent } from '../handlers/salesHandler';
-import { handleInventoryIntent } from '../handlers/inventoryHandler';
-import { handleProcurementIntent } from '../handlers/procurementHandler';
-import { handleHelpIntent, handleUnknownIntent } from '../handlers/helpHandler';
-import { hasAccess } from '../auth/rbac';
-import { extractUserIdentity } from '../auth/aadAuth';
-import { logQuery, logError } from '../utils/logger';
+import { parseIntent } from '../../core/nlp/intentParser';
+import { routeIntent } from '../../core/engine';
+import { hasAccess } from '../../core/auth/rbac';
+import { extractUserIdentity } from '../../core/auth/aadAuth';
+import { logQuery, logError } from '../../core/utils/logger';
 import {
   createConversationDataAccessor,
   createUserDataAccessor,
   getConversationData,
   saveState,
 } from './conversationState';
-import { buildWelcomeCard, buildErrorCard } from './adaptiveCards';
-import { getConfig } from '../utils/config';
-import enStrings from '../i18n/en.json';
-import heStrings from '../i18n/he.json';
-
-/** Sales-related intents */
-const SALES_INTENTS = new Set(['SALES_PIPELINE', 'SALES_PERFORMANCE', 'SALES_DEAL_DETAIL']);
-/** Inventory-related intents */
-const INVENTORY_INTENTS = new Set(['INVENTORY_LEVELS', 'INVENTORY_ALERTS', 'INVENTORY_SKU']);
-/** Procurement-related intents */
-const PROCUREMENT_INTENTS = new Set([
-  'PROCUREMENT_PO_STATUS',
-  'PROCUREMENT_APPROVALS',
-  'PROCUREMENT_SUPPLIER',
-]);
+import { buildWelcomeCard, buildErrorCard } from '../../core/cards/adaptiveCards';
+import { getConfig } from '../../core/utils/config';
+import enStrings from '../../core/i18n/en.json';
+import heStrings from '../../core/i18n/he.json';
 
 /**
  * BIAgent is the main Teams bot class.
@@ -154,24 +140,8 @@ export class BIAgent extends ActivityHandler {
           return;
         }
 
-        // ── Route to correct handler ──────────────────────────────────────────
-        let botResponse;
-
-        if (SALES_INTENTS.has(parsedIntent.intent)) {
-          botResponse = await handleSalesIntent(parsedIntent, userIdentity.objectId, sessionId);
-        } else if (INVENTORY_INTENTS.has(parsedIntent.intent)) {
-          botResponse = await handleInventoryIntent(parsedIntent, sessionId);
-        } else if (PROCUREMENT_INTENTS.has(parsedIntent.intent)) {
-          botResponse = await handleProcurementIntent(
-            parsedIntent,
-            userIdentity.objectId,
-            sessionId,
-          );
-        } else if (parsedIntent.intent === 'HELP' || parsedIntent.intent === 'LANG_SWITCH') {
-          botResponse = handleHelpIntent(parsedIntent);
-        } else {
-          botResponse = handleUnknownIntent(detectedLanguage);
-        }
+        // ── Route to correct handler (shared engine — same pipeline as Web Chat) ─
+        const botResponse = await routeIntent(parsedIntent, userIdentity.objectId, sessionId);
 
         // ── Send response ─────────────────────────────────────────────────────
         if (botResponse.adaptiveCard) {

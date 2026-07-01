@@ -6,10 +6,10 @@
  * - Overdue PO detection
  */
 
-import { initConfig } from '../src/utils/config';
-import { checkAlerts, clearAlertCache } from '../src/alerts/alertEngine';
-import { InventoryConnector } from '../src/connectors/inventoryConnector';
-import { ERPConnector } from '../src/connectors/erpConnector';
+import { initConfig } from '../src/core/utils/config';
+import { checkAlerts, clearAlertCache } from '../src/core/alerts/alertEngine';
+import { InventoryConnector } from '../src/core/connectors/inventoryConnector';
+import { ERPConnector } from '../src/core/connectors/erpConnector';
 
 // Mock AppInsights
 jest.mock('applicationinsights', () => ({

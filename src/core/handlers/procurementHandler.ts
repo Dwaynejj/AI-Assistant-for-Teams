@@ -7,11 +7,21 @@
 import { ParsedIntent } from '../nlp/intentParser';
 import { BotResponse } from './salesHandler';
 import { ERPConnector } from '../connectors/erpConnector';
-import { buildPOStatusCard, buildApprovalListCard, buildSupplierCard } from '../bot/adaptiveCards';
+import {
+  buildPOStatusCard,
+  buildApprovalListCard,
+  buildSupplierCard,
+} from '../cards/adaptiveCards';
 import enStrings from '../i18n/en.json';
 import heStrings from '../i18n/he.json';
 
-const erp = new ERPConnector();
+// Lazily constructed — ERPConnector reads config in its constructor, so it
+// must not be instantiated at module load time (before initConfig() runs).
+let erp: ERPConnector | undefined;
+function getErp(): ERPConnector {
+  if (!erp) erp = new ERPConnector();
+  return erp;
+}
 
 /**
  * Handle procurement-related intents and return a BotResponse.
@@ -34,7 +44,7 @@ export async function handleProcurementIntent(
       const poNumber = intent.entities.poNumber;
       if (!poNumber) {
         // No specific PO number — show all open POs
-        const openPOs = await erp.getOpenPOs({}, sessionId);
+        const openPOs = await getErp().getOpenPOs({}, sessionId);
         return {
           adaptiveCard: buildApprovalListCard(openPOs, lang),
           language: lang,
@@ -43,7 +53,7 @@ export async function handleProcurementIntent(
         };
       }
 
-      const po = await erp.getPOStatus(poNumber, sessionId);
+      const po = await getErp().getPOStatus(poNumber, sessionId);
       return {
         adaptiveCard: buildPOStatusCard(po, lang),
         language: lang,
@@ -53,7 +63,7 @@ export async function handleProcurementIntent(
     }
 
     case 'PROCUREMENT_APPROVALS': {
-      const pendingPOs = await erp.getPendingApprovals(userId, sessionId);
+      const pendingPOs = await getErp().getPendingApprovals(userId, sessionId);
       return {
         adaptiveCard: buildApprovalListCard(pendingPOs, lang),
         language: lang,
@@ -82,7 +92,7 @@ export async function handleProcurementIntent(
         }
       }
 
-      const suppliers = await erp.getSuppliersByCategory(category, sessionId);
+      const suppliers = await getErp().getSuppliersByCategory(category, sessionId);
       return {
         adaptiveCard: buildSupplierCard(suppliers, lang),
         language: lang,
@@ -93,7 +103,7 @@ export async function handleProcurementIntent(
 
     default: {
       // Fallback: show pending approvals
-      const pendingPOs = await erp.getPendingApprovals(userId, sessionId);
+      const pendingPOs = await getErp().getPendingApprovals(userId, sessionId);
       return {
         adaptiveCard: buildApprovalListCard(pendingPOs, lang),
         language: lang,

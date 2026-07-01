@@ -11,10 +11,10 @@
 
 import axios from 'axios';
 import { CardFactory } from 'botbuilder';
-import { Alert } from './alertEngine';
-import { formatAlert } from './alertFormatter';
-import { getConfig } from '../utils/config';
-import { logAlert, logError, logInfo } from '../utils/logger';
+import { Alert } from '../../core/alerts/alertEngine';
+import { formatAlert } from '../../core/alerts/alertFormatter';
+import { getConfig } from '../../core/utils/config';
+import { logAlert, logError, logInfo } from '../../core/utils/logger';
 
 /** Cache for the Bot Framework access token */
 let cachedToken: { token: string; expiresAt: number } | null = null;

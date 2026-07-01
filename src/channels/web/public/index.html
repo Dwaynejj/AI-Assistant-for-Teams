@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BIAgent — Business Intelligence Assistant (Demo)</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="app-header-title">
+        <span class="app-logo">🤖</span>
+        <div>
+          <h1>BIAgent</h1>
+          <p>Business Intelligence Assistant — Local Demo</p>
+        </div>
+      </div>
+      <div class="app-header-controls">
+        <span class="demo-badge" title="Running on mock data with full access — nothing here touches a real system">
+          ● Demo mode: mock data, full access
+        </span>
+        <div class="lang-toggle" role="group" aria-label="Language">
+          <button type="button" id="lang-en" class="lang-btn active" data-lang="en">EN</button>
+          <button type="button" id="lang-he" class="lang-btn" data-lang="he">עברית</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="chat-shell">
+      <div id="messages" class="messages" aria-live="polite"></div>
+
+      <div class="quick-actions" id="quick-actions">
+        <button type="button" class="quick-btn" data-query="show me the sales pipeline">📊 Sales Report</button>
+        <button type="button" class="quick-btn" data-query="show inventory status">🏭 Inventory Status</button>
+        <button type="button" class="quick-btn" data-query="show open purchase orders">📦 Procurement</button>
+        <button type="button" class="quick-btn" data-query="help">🤖 Help</button>
+        <button type="button" class="quick-btn quick-btn-alert" id="preview-alerts-btn">🔔 Preview Alerts</button>
+      </div>
+
+      <form id="chat-form" class="chat-input-row" autocomplete="off">
+        <input
+          type="text"
+          id="chat-input"
+          placeholder="Ask about sales, inventory, or purchase orders… (English or Hebrew)"
+          aria-label="Message"
+        />
+        <button type="submit" id="send-btn">Send</button>
+      </form>
+    </main>
+
+    <footer class="app-footer">
+      Everything you see is generated from built-in mock data — no Azure account, no Microsoft Teams,
+      and no real CRM/ERP/inventory system required. See the README for how to connect this to Microsoft Teams
+      and live data sources.
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

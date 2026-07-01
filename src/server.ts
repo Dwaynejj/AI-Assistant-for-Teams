@@ -1,29 +1,37 @@
 /* eslint-disable no-console */
 /**
- * @file index.ts
+ * @file server.ts
  * @description Express app entry point for the Teams BI Agent.
  *
  * Bootstraps in this order:
- *  1. Load and validate configuration (fail-fast)
- *  2. Initialise Application Insights
- *  3. Create Bot Framework adapter
- *  4. Register routes: POST /api/messages, GET /health
+ *  1. Load and validate configuration (fail-fast in production, demo defaults locally)
+ *  2. Initialise Application Insights (skipped automatically in demo mode)
+ *  3. Create Bot Framework adapter (Teams channel)
+ *  4. Register routes:
+ *       POST /api/messages     — Bot Framework activity endpoint (Teams)
+ *       GET  /health           — health check
+ *       POST /api/chat         — Web Chat demo channel (no Teams/Azure required)
+ *       GET  /api/welcome      — Web Chat welcome card
+ *       GET  /api/alerts/preview — Web Chat proactive-alert preview
+ *       GET  /                 — Web Chat static UI
  *  5. Start HTTP server
  *  6. Register uncaught exception handlers for graceful shutdown
  */
 
+import path from 'path';
 import express, { Request, Response } from 'express';
 import { BotFrameworkAdapter } from 'botbuilder';
-import { initConfig, initAppInsights } from './utils/config';
-import { logInfo, logError } from './utils/logger';
-import { BIAgent } from './bot/biAgent';
+import { initConfig, initAppInsights } from './core/utils/config';
+import { logInfo, logError } from './core/utils/logger';
+import { BIAgent } from './channels/teams/biAgent';
+import { createWebChatRouter } from './channels/web/webChatRouter';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 async function main(): Promise<void> {
-  // ── Step 1: Load and validate config (fail-fast on missing keys) ──────────
+  // ── Step 1: Load and validate config (fail-fast on missing keys in prod) ──
   let config;
   try {
     config = await initConfig();
@@ -32,15 +40,23 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // ── Step 2: Initialise Application Insights (before anything else) ────────
+  // ── Step 2: Initialise Application Insights (no-op in demo mode) ──────────
   try {
     initAppInsights(config);
-    logInfo('[Startup] Application Insights initialised');
+    if (config.appInsightsInstrumentationKey || config.appInsightsConnectionString) {
+      logInfo('[Startup] Application Insights initialised');
+    }
   } catch (err) {
     console.warn('[Startup] Application Insights init failed (continuing):', err);
   }
 
-  // ── Step 3: Create Bot Framework adapter ─────────────────────────────────
+  if (config.demoMode) {
+    console.info(
+      '[Startup] Running in local demo mode — using mock data, no Azure/Teams credentials required.',
+    );
+  }
+
+  // ── Step 3: Create Bot Framework adapter (Teams channel) ──────────────────
   const adapter = new BotFrameworkAdapter({
     appId: config.microsoftAppId,
     appPassword: config.microsoftAppPassword,
@@ -95,9 +111,18 @@ async function main(): Promise<void> {
       version: config.appVersion,
       uptime: Math.floor(process.uptime()),
       environment: config.nodeEnv,
+      demoMode: config.demoMode,
       timestamp: new Date().toISOString(),
     });
   });
+
+  // Web Chat demo channel — /api/chat, /api/welcome, /api/alerts/preview
+  app.use(createWebChatRouter());
+
+  // Static Web Chat UI. Works both under ts-node (src/channels/web/public)
+  // and the compiled build (dist/channels/web/public — copied there by
+  // `npm run build`, see scripts/copyAssets.js).
+  app.use(express.static(path.join(__dirname, 'channels', 'web', 'public')));
 
   // ── Step 6: Start HTTP server ─────────────────────────────────────────────
   const server = app.listen(config.port, () => {
@@ -106,8 +131,9 @@ async function main(): Promise<void> {
       environment: config.nodeEnv,
     });
     console.info(`✅ Teams BI Agent listening on port ${config.port}`);
-    console.info(`   Health: http://localhost:${config.port}/health`);
-    console.info(`   Bot endpoint: http://localhost:${config.port}/api/messages`);
+    console.info(`   🌐 Try it now (no setup needed): http://localhost:${config.port}`);
+    console.info(`   🩺 Health check: http://localhost:${config.port}/health`);
+    console.info(`   🤖 Teams bot endpoint: http://localhost:${config.port}/api/messages`);
   });
 
   // ── Step 7: Graceful shutdown handlers ────────────────────────────────────

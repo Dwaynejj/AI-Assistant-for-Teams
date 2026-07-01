@@ -21,7 +21,7 @@ const config: Config = {
   },
   collectCoverageFrom: [
     'src/**/*.ts',
-    '!src/index.ts',
+    '!src/server.ts',
     '!src/**/*.d.ts',
   ],
   coverageThreshold: {

@@ -8,10 +8,10 @@
  */
 
 import { AzureFunction, Context } from '@azure/functions';
-import { initConfig, initAppInsights } from '../../src/utils/config';
-import { checkAlerts } from '../../src/alerts/alertEngine';
-import { sendAlertsToTeams } from '../../src/alerts/teamsNotifier';
-import { logInfo, logError } from '../../src/utils/logger';
+import { initConfig, initAppInsights } from '../../src/core/utils/config';
+import { checkAlerts } from '../../src/core/alerts/alertEngine';
+import { sendAlertsToTeams } from '../../src/channels/teams/teamsNotifier';
+import { logInfo, logError } from '../../src/core/utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 
 /**

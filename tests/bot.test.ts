@@ -10,11 +10,15 @@
  * using dynamic imports in describe blocks to avoid module-load-time errors.
  */
 
-import { initConfig } from '../src/utils/config';
-import { hasAccess, invalidateRoleCache } from '../src/auth/rbac';
-import { buildWelcomeCard, buildHelpCard, buildPipelineCard } from '../src/bot/adaptiveCards';
-import { handleHelpIntent, handleUnknownIntent } from '../src/handlers/helpHandler';
-import { ParsedIntent } from '../src/nlp/intentParser';
+import { initConfig } from '../src/core/utils/config';
+import { hasAccess, invalidateRoleCache } from '../src/core/auth/rbac';
+import {
+  buildWelcomeCard,
+  buildHelpCard,
+  buildPipelineCard,
+} from '../src/core/cards/adaptiveCards';
+import { handleHelpIntent, handleUnknownIntent } from '../src/core/handlers/helpHandler';
+import { ParsedIntent } from '../src/core/nlp/intentParser';
 
 // Prevent real Azure AI Language API calls
 jest.mock('@azure/ai-language-text', () => ({
@@ -28,18 +32,18 @@ jest.mock('@azure/identity', () => ({
   DefaultAzureCredential: jest.fn(),
 }));
 
-let handleSalesIntent: typeof import('../src/handlers/salesHandler').handleSalesIntent;
-let CRMConnector: typeof import('../src/connectors/crmConnector').CRMConnector;
+let handleSalesIntent: typeof import('../src/core/handlers/salesHandler').handleSalesIntent;
+let CRMConnector: typeof import('../src/core/connectors/crmConnector').CRMConnector;
 
 beforeAll(async () => {
   // Config MUST be initialised before any connector constructors run
   await initConfig();
 
   // Now safe to import modules that call getConfig() in their constructors
-  const salesHandler = await import('../src/handlers/salesHandler');
+  const salesHandler = await import('../src/core/handlers/salesHandler');
   handleSalesIntent = salesHandler.handleSalesIntent;
 
-  const crmModule = await import('../src/connectors/crmConnector');
+  const crmModule = await import('../src/core/connectors/crmConnector');
   CRMConnector = crmModule.CRMConnector;
 });
 

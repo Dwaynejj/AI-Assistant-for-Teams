@@ -11,7 +11,7 @@ import {
   buildDealListCard,
   buildPerformanceCard,
   buildDealDetailCard,
-} from '../bot/adaptiveCards';
+} from '../cards/adaptiveCards';
 import enStrings from '../i18n/en.json';
 import heStrings from '../i18n/he.json';
 
@@ -27,7 +27,13 @@ export interface BotResponse {
   dataSource: string;
 }
 
-const crm = new CRMConnector();
+// Lazily constructed — CRMConnector reads config in its constructor, so it
+// must not be instantiated at module load time (before initConfig() runs).
+let crm: CRMConnector | undefined;
+function getCrm(): CRMConnector {
+  if (!crm) crm = new CRMConnector();
+  return crm;
+}
 
 /**
  * Handle sales-related intents and return a BotResponse.
@@ -49,7 +55,7 @@ export async function handleSalesIntent(
     case 'SALES_PIPELINE': {
       const dateRange = intent.entities.dateRange;
       const quarter = dateRange?.label?.startsWith('Q') ? dateRange.label : undefined;
-      const pipeline = await crm.getPipelineSummary({ quarter }, sessionId);
+      const pipeline = await getCrm().getPipelineSummary({ quarter }, sessionId);
       return {
         adaptiveCard: buildPipelineCard(pipeline, lang),
         language: lang,
@@ -63,7 +69,7 @@ export async function handleSalesIntent(
         from: new Date(new Date().getFullYear(), 0, 1),
         to: new Date(),
       };
-      const performance = await crm.getSalesPerformance(dateRange, sessionId);
+      const performance = await getCrm().getSalesPerformance(dateRange, sessionId);
       return {
         adaptiveCard: buildPerformanceCard(performance, lang),
         language: lang,
@@ -75,7 +81,7 @@ export async function handleSalesIntent(
     case 'SALES_DEAL_DETAIL': {
       // If a specific deal ID or PO number is provided, look it up
       const dealId = intent.entities.poNumber ?? 'D-001'; // fallback to first deal in demo
-      const deal = await crm.getDealDetail(dealId, sessionId);
+      const deal = await getCrm().getDealDetail(dealId, sessionId);
       return {
         adaptiveCard: buildDealDetailCard(deal, lang),
         language: lang,
@@ -86,7 +92,7 @@ export async function handleSalesIntent(
 
     default: {
       // Fallback: show deals closing this month
-      const deals = await crm.getDealsClosingThisMonth(sessionId);
+      const deals = await getCrm().getDealsClosingThisMonth(sessionId);
       return {
         adaptiveCard: buildDealListCard(deals, lang),
         language: lang,

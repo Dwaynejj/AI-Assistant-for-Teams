@@ -7,12 +7,18 @@
 import { ParsedIntent } from '../nlp/intentParser';
 import { BotResponse } from './salesHandler';
 import { InventoryConnector } from '../connectors/inventoryConnector';
-import { buildInventoryAlertCard, buildStockDetailCard } from '../bot/adaptiveCards';
+import { buildInventoryAlertCard, buildStockDetailCard } from '../cards/adaptiveCards';
 import { getConfig } from '../utils/config';
 import enStrings from '../i18n/en.json';
 import heStrings from '../i18n/he.json';
 
-const inventory = new InventoryConnector();
+// Lazily constructed — InventoryConnector reads config in its constructor, so
+// it must not be instantiated at module load time (before initConfig() runs).
+let inventory: InventoryConnector | undefined;
+function getInventory(): InventoryConnector {
+  if (!inventory) inventory = new InventoryConnector();
+  return inventory;
+}
 
 /**
  * Handle inventory-related intents and return a BotResponse.
@@ -31,7 +37,7 @@ export async function handleInventoryIntent(
 
   switch (intent.intent) {
     case 'INVENTORY_LEVELS': {
-      const snapshot = await inventory.getWarehouseSnapshot(undefined, sessionId);
+      const snapshot = await getInventory().getWarehouseSnapshot(undefined, sessionId);
       const items = snapshot.items;
       return {
         adaptiveCard: buildInventoryAlertCard(items, lang, config.criticalStockThreshold),
@@ -42,7 +48,7 @@ export async function handleInventoryIntent(
     }
 
     case 'INVENTORY_ALERTS': {
-      const lowItems = await inventory.getLowStockItems(config.lowStockThreshold, sessionId);
+      const lowItems = await getInventory().getLowStockItems(config.lowStockThreshold, sessionId);
       return {
         adaptiveCard: buildInventoryAlertCard(lowItems, lang, config.criticalStockThreshold),
         language: lang,
@@ -64,7 +70,7 @@ export async function handleInventoryIntent(
         };
       }
 
-      const item = await inventory.getStockBySKU(skuCode, sessionId);
+      const item = await getInventory().getStockBySKU(skuCode, sessionId);
       return {
         adaptiveCard: buildStockDetailCard(item, lang),
         language: lang,
@@ -75,7 +81,7 @@ export async function handleInventoryIntent(
 
     default: {
       // Fallback: show low stock alert
-      const lowItems = await inventory.getLowStockItems(config.lowStockThreshold, sessionId);
+      const lowItems = await getInventory().getLowStockItems(config.lowStockThreshold, sessionId);
       return {
         adaptiveCard: buildInventoryAlertCard(lowItems, lang, config.criticalStockThreshold),
         language: lang,

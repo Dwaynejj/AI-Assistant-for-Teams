@@ -4,16 +4,16 @@
  * All tests use mock data and do not call real Azure AI Language APIs.
  */
 
-import { detectLanguage, isLikelyHebrew } from '../src/nlp/languageDetector';
-import { parseIntent } from '../src/nlp/intentParser';
+import { detectLanguage, isLikelyHebrew } from '../src/core/nlp/languageDetector';
+import { parseIntent } from '../src/core/nlp/intentParser';
 import {
   extractPONumber,
   extractSKUCode,
   extractDateRange,
   extractAmount,
   extractEntities,
-} from '../src/nlp/entities';
-import { initConfig } from '../src/utils/config';
+} from '../src/core/nlp/entities';
+import { initConfig } from '../src/core/utils/config';
 
 // Mock the Azure AI Language client to prevent real API calls
 jest.mock('@azure/ai-language-text', () => ({
